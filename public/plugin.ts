@@ -108,6 +108,7 @@ export class AnomalyDetectionOpenSearchDashboardsPlugin
         const [coreStart] = await core.getStartServices();
         return renderApp(coreStart, params, undefined, hideInAppSideNavBar);
       },
+      euiIconType: 'monitoringApp'
     });
 
     if (forecastingEnabled) {
