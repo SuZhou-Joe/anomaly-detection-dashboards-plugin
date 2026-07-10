@@ -11,7 +11,7 @@
 
 import React, { useState } from 'react';
 import {
-  EuiButton,
+  EuiSmallButton,
   EuiContextMenuItem,
   EuiContextMenuPanel,
   EuiFlexGroup,
@@ -19,6 +19,8 @@ import {
   EuiPopover,
 } from '@elastic/eui';
 import { Detector } from '../../../../models/interfaces';
+import { getApplication, getNavigationUI, getUISettings } from '../../../../services';
+import { USE_NEW_HOME_PAGE } from '../../../../utils/constants';
 
 interface DetectorControls {
   onEditDetector(): void;
@@ -30,20 +32,24 @@ interface DetectorControls {
 }
 export const DetectorControls = (props: DetectorControls) => {
   const [isOpen, setIsOpen] = useState(false);
-  return (
+  const useUpdatedUX = getUISettings().get(USE_NEW_HOME_PAGE);
+  const { HeaderControl } = getNavigationUI();
+  const { setAppRightControls } = getApplication();
+
+  const ActionsPopover = (
     <EuiFlexGroup justifyContent="spaceBetween" alignItems="center">
       <EuiFlexItem grow={false}>
         <EuiPopover
           id="actionsPopover"
           button={
-            <EuiButton
+            <EuiSmallButton
               iconType="arrowDown"
               iconSide="right"
               data-test-subj="actionsButton"
               onClick={() => setIsOpen(!isOpen)}
             >
               Actions
-            </EuiButton>
+            </EuiSmallButton>
           }
           panelPaddingSize="none"
           anchorPosition="downLeft"
@@ -55,6 +61,7 @@ export const DetectorControls = (props: DetectorControls) => {
               key="editDetector"
               data-test-subj="editDetectorSettingsItem"
               onClick={props.onEditDetector}
+              size="s"
             >
               Edit detector settings
             </EuiContextMenuItem>
@@ -63,6 +70,7 @@ export const DetectorControls = (props: DetectorControls) => {
               key="editFeatures"
               data-test-subj="editModelConfigurationItem"
               onClick={props.onEditFeatures}
+              size="s"
             >
               Edit model configuration
             </EuiContextMenuItem>
@@ -72,6 +80,7 @@ export const DetectorControls = (props: DetectorControls) => {
               data-test-subj="deleteDetectorItem"
               onClick={props.onDelete}
               style={{ color: '#FF6666' }}
+              size="s"
             >
               Delete detector
             </EuiContextMenuItem>
@@ -79,5 +88,23 @@ export const DetectorControls = (props: DetectorControls) => {
         </EuiPopover>
       </EuiFlexItem>
     </EuiFlexGroup>
+  );
+  const renderActionsPopover = () => {
+    return useUpdatedUX ? (
+      <HeaderControl
+        setMountPoint={setAppRightControls}
+        controls={[
+          {
+            renderComponent: ActionsPopover
+          }
+        ]}
+      />
+    ) : (
+      ActionsPopover
+    );
+  };
+
+  return (
+    renderActionsPopover()
   );
 };

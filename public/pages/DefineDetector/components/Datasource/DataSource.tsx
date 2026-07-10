@@ -9,16 +9,23 @@
  * GitHub history for details.
  */
 
-import { EuiComboBox, EuiCallOut, EuiSpacer } from '@elastic/eui';
+import { EuiCompressedComboBox, EuiCallOut, EuiSpacer } from '@elastic/eui';
 import { Field, FieldProps, FormikProps, useFormikContext } from 'formik';
 import { debounce, get } from 'lodash';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { CatIndex, IndexAlias } from '../../../../../server/models/types';
+import {
+  CatIndex,
+  ClusterInfo,
+  IndexAlias,
+} from '../../../../../server/models/types';
 import ContentPanel from '../../../../components/ContentPanel/ContentPanel';
 import { AppState } from '../../../../redux/reducers';
 import {
+  getAliases,
+  getClustersInfo,
   getIndices,
+  getIndicesAndAliases,
   getMappings,
   getPrioritizedIndices,
 } from '../../../../redux/reducers/opensearch';
@@ -26,6 +33,7 @@ import { getError, isInvalid } from '../../../../utils/utils';
 import { IndexOption } from './IndexOption';
 import {
   getDataSourceFromURL,
+  getLocalCluster,
   getVisibleOptions,
   sanitizeSearchText,
 } from '../../../utils/helpers';
@@ -37,10 +45,12 @@ import { ModelConfigurationFormikValues } from '../../../ConfigureModel/models/i
 import { INITIAL_MODEL_CONFIGURATION_VALUES } from '../../../ConfigureModel/utils/constants';
 import { FILTER_TYPES } from '../../../../models/interfaces';
 import { useLocation } from 'react-router-dom';
+import _ from 'lodash';
+import { getClusterOptionLabel } from '../../utils/helpers';
 
 interface DataSourceProps {
   formikProps: FormikProps<DetectorDefinitionFormikValues>;
-  origIndex: string;
+  origIndex: { label: string }[];
   isEdit: boolean;
   setModelConfigValues?(initialValues: ModelConfigurationFormikValues): void;
   setNewIndexSelected?(isNew: boolean): void;
@@ -48,47 +58,141 @@ interface DataSourceProps {
   oldFilterQuery: any;
 }
 
+export interface ClusterOption {
+  label: string;
+  cluster: string;
+  localcluster: string;
+}
+
 export function DataSource(props: DataSourceProps) {
   const dispatch = useDispatch();
   const location = useLocation();
   const MDSQueryParams = getDataSourceFromURL(location);
   const dataSourceId = MDSQueryParams.dataSourceId;
-  const [indexName, setIndexName] = useState<string>(
-    props.formikProps.values.index[0]?.label
+  const [indexNames, setIndexNames] = useState<{ label: string }[]>(
+    props.formikProps.values.index
   );
   const [queryText, setQueryText] = useState('');
   const opensearchState = useSelector((state: AppState) => state.opensearch);
   const { setFieldValue } = useFormikContext();
+  const [localClusterName, setLocalClusterName] = useState('');
 
   useEffect(() => {
-    const getInitialIndices = async () => {
-      await dispatch(getIndices(queryText, dataSourceId));
-      setFieldValue('index', props.formikProps.values.index);
-      setFieldValue('timeField', props.formikProps.values.timeField);
-      setFieldValue('filters', props.formikProps.values.filters);
+    const getInitialClusters = async () => {
+      await dispatch(getClustersInfo(dataSourceId));
+      handleClusterUpdate(opensearchState.clusters);
     };
-    getInitialIndices();
+    getInitialClusters();
   }, [dataSourceId]);
 
+  const getIndicesAndAliasesBasedOnCluster = async (
+    clusters: ClusterOption[],
+    localClusterExists: boolean
+  ) => {
+    //Convert list of clusters to a string for searching
+    const clustersString = getClustersStringForSearchQuery(clusters);
+    await dispatch(
+      getIndicesAndAliases(
+        queryText,
+        dataSourceId,
+        clustersString,
+        localClusterExists
+      )
+    );
+    setFieldValue('index', props.formikProps.values.index);
+    setFieldValue('timeField', props.formikProps.values.timeField);
+    setFieldValue('filters', props.formikProps.values.filters);
+  };
+
   useEffect(() => {
-    setIndexName(props.formikProps.values.index[0]?.label);
-  }, [props.formikProps]);
+    // Ensure that indices are updated when clusters change
+    if (props.formikProps.values.clusters) {
+      const selectedClusters: ClusterOption[] =
+        props.formikProps.values.clusters;
+      if (selectedClusters && selectedClusters.length > 0) {
+        const localClusterExists: boolean = selectedClusters.some(
+          (cluster) => cluster.localcluster === 'true'
+        );
+        if (
+          selectedClusters.length === 1 &&
+          selectedClusters[0].localcluster === 'true'
+        ) {
+          getIndicesAndAliasesBasedOnCluster([], localClusterExists);
+          setLocalClusterName(selectedClusters[0].cluster);
+        } else {
+          getIndicesAndAliasesBasedOnCluster(
+            selectedClusters,
+            localClusterExists
+          );
+        }
+      }
+    }
+  }, [props.formikProps.values.clusters]);
+
+  const getClustersStringForSearchQuery = (clusters: ClusterOption[]) => {
+    let clustersString = '';
+    if (clusters.length > 0) {
+      clustersString = clusters
+        .filter((cluster) => cluster.localcluster == 'false')
+        .map((cluster) => cluster.cluster)
+        .join(',');
+    }
+    return clustersString;
+  };
+
+  const handleClusterUpdate = (clusters: ClusterInfo[]) => {
+    if (opensearchState.clusters && opensearchState.clusters.length > 0) {
+      const localCluster: ClusterInfo[] = getLocalCluster(
+        opensearchState.clusters
+      );
+      if (props.formikProps.values.clusters && props.formikProps.values.clusters.length > 0) {
+        const clusterInfoList: ClusterInfo[] = props.formikProps.values.clusters.map(option => ({
+          name: option.cluster,
+          localCluster: option.localcluster === 'true',
+        }));
+        setFieldValue('clusters', getVisibleClusterOptions(clusterInfoList));
+      } else {
+        setFieldValue('clusters', getVisibleClusterOptions(localCluster));
+      }
+    }
+  };
+
+  useEffect(() => {
+    handleClusterUpdate(opensearchState.clusters);
+  }, [opensearchState.clusters]);
+
+  useEffect(() => {
+    setIndexNames(props.formikProps.values.index);
+  }, [props.formikProps.values.index]);
 
   const handleSearchChange = debounce(async (searchValue: string) => {
     if (searchValue !== queryText) {
       const sanitizedQuery = sanitizeSearchText(searchValue);
       setQueryText(sanitizedQuery);
-      await dispatch(getPrioritizedIndices(sanitizedQuery, dataSourceId));
+      if (props.formikProps.values.clusters) {
+        const selectedClusters: ClusterOption[] =
+          props.formikProps.values.clusters;
+        const clustersString =
+          getClustersStringForSearchQuery(selectedClusters);
+        await dispatch(
+          getPrioritizedIndices(sanitizedQuery, dataSourceId, clustersString)
+        );
+      } else {
+        await dispatch(getPrioritizedIndices(sanitizedQuery, dataSourceId, ''));
+      }
     }
   }, 300);
 
-  const handleIndexNameChange = (selectedOptions: any) => {
-    const indexName = get(selectedOptions, '0.label', '');
-    setIndexName(indexName);
-    if (indexName !== '') {
-      dispatch(getMappings(indexName, dataSourceId));
+  const handleIndexNameChange = (selectedOptions: any, oldOptions: { label: string }[] = props.formikProps.values.index) => {
+    const indexNames = selectedOptions;
+    setIndexNames(indexNames);
+    if (indexNames.length > 0) {
+      const indices: string[] = indexNames.map(
+        (index: { label: string }) => index.label
+      );
+      dispatch(getMappings(indices, dataSourceId));
     }
-    if (indexName !== props.origIndex) {
+    if (isSelectedOptionIndexRemoved(selectedOptions, oldOptions)) {
       if (props.setNewIndexSelected) {
         props.setNewIndexSelected(true);
       }
@@ -99,16 +203,47 @@ export function DataSource(props: DataSourceProps) {
     }
   };
 
-  const isDifferentIndex = () => {
-    return props.isEdit && indexName !== props.origIndex;
+  const isSelectedOptionIndexRemoved = (
+    newSelectedOptions: { label: string }[] = indexNames,
+    oldSelectedOptions: { label: string }[] = props.formikProps.values.index
+  ) => {
+      if (_.isEmpty(oldSelectedOptions) && _.isEmpty(newSelectedOptions)) {
+        return false;
+      }
+    const newSelectedOptionsSet = new Set(newSelectedOptions);
+    const indexRemoved: boolean =
+    oldSelectedOptions.some((value) => !newSelectedOptionsSet.has(value));
+    return indexRemoved;
   };
 
+  const getVisibleClusterOptions = (
+    clusters: ClusterInfo[]
+  ): ClusterOption[] => {
+    if (clusters.length > 0) {
+      const visibleClusters = clusters.map((value) => ({
+        label: getClusterOptionLabel(value),
+        cluster: value.name,
+        localcluster: value.localCluster.toString(),
+      }));
+      // Using _.orderBy to sort clusters with local clusters first
+      const sortedClusterOptions = _.orderBy(
+        visibleClusters,
+        [(option) => option.label.endsWith('(Local)'), 'label'],
+        ['desc', 'asc']
+      );
+      return sortedClusterOptions;
+    } else {
+      return [];
+    }
+  };
+
+  const visibleClusters = get(opensearchState, 'clusters', []) as ClusterInfo[];
   const visibleIndices = get(opensearchState, 'indices', []) as CatIndex[];
   const visibleAliases = get(opensearchState, 'aliases', []) as IndexAlias[];
 
   return (
     <ContentPanel title="Select Data" titleSize="s">
-      {props.isEdit && isDifferentIndex() ? (
+      {props.isEdit && isSelectedOptionIndexRemoved() ? (
         <div>
           <EuiCallOut
             title="Modifying the selected index resets your detector configuration."
@@ -119,23 +254,55 @@ export function DataSource(props: DataSourceProps) {
           <EuiSpacer />
         </div>
       ) : null}
+      <Field name="clusters">
+        {({ field, form }: FieldProps) => (
+          <FormattedFormRow
+            title="Clusters"
+            hint="Select a local cluster or remote clusters from cross-cluster connections."
+            isInvalid={isInvalid(field.name, form)}
+            error={getError(field.name, form)}
+          >
+            <EuiCompressedComboBox
+              data-test-subj="clustersFilter"
+              id="clusters"
+              placeholder="Find clusters"
+              async
+              singleSelection={false}
+              options={getVisibleClusterOptions(visibleClusters)}
+              isLoading={opensearchState.requesting}
+              selectedOptions={field.value}
+              isClearable={false}
+              onBlur={() => {
+                form.setFieldTouched('clusters', true);
+              }}
+              onChange={(options) => {
+                form.setFieldValue('clusters', options);
+              }}
+            />
+          </FormattedFormRow>
+        )}
+      </Field>
       <Field name="index" validate={validateIndex}>
         {({ field, form }: FieldProps) => {
           return (
             <FormattedFormRow
               title="Index"
-              hint="Choose an index or index pattern as the data source."
+              hint="Choose an index, index pattern or alias as the data source."
               isInvalid={isInvalid(field.name, form)}
               error={getError(field.name, form)}
               helpText="You can use a wildcard (*) in your index pattern."
             >
-              <EuiComboBox
+              <EuiCompressedComboBox
                 data-test-subj="indicesFilter"
                 id="index"
                 placeholder="Find indices"
                 async
                 isLoading={opensearchState.requesting}
-                options={getVisibleOptions(visibleIndices, visibleAliases)}
+                options={getVisibleOptions(
+                  visibleIndices,
+                  visibleAliases,
+                  localClusterName
+                )}
                 onSearchChange={handleSearchChange}
                 onCreateOption={(createdOption: string) => {
                   const normalizedOptions = createdOption.trim();
@@ -151,15 +318,17 @@ export function DataSource(props: DataSourceProps) {
                   form.setFieldValue('index', options);
                   form.setFieldValue('timeField', undefined);
                   form.setFieldValue('filters', []);
-                  if (props.setModelConfigValues) {
+                  if (
+                    props.setModelConfigValues &&
+                    isSelectedOptionIndexRemoved(options, field.value)
+                  ) {
                     props.setModelConfigValues(
                       INITIAL_MODEL_CONFIGURATION_VALUES
                     );
                   }
-                  handleIndexNameChange(options);
+                  handleIndexNameChange(options, field.value);
                 }}
                 selectedOptions={field.value}
-                singleSelection={{ asPlainText: true }}
                 isClearable={false}
                 renderOption={(option, searchValue, className) => (
                   <IndexOption

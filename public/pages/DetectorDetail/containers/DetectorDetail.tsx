@@ -15,14 +15,12 @@ import {
   EuiTab,
   EuiFlexGroup,
   EuiFlexItem,
-  EuiTitle,
   EuiOverlayMask,
   EuiCallOut,
   EuiSpacer,
   EuiText,
-  EuiFieldText,
+  EuiCompressedFieldText,
   EuiLoadingSpinner,
-  EuiButton,
 } from '@elastic/eui';
 import { CoreStart, MountPoint } from '../../../../../../src/core/public';
 import { CoreServicesContext } from '../../../components/CoreServices/CoreServices';
@@ -48,7 +46,7 @@ import {
 import { getAliases, getIndices } from '../../../redux/reducers/opensearch';
 import { getErrorMessage, Listener } from '../../../utils/utils';
 import { darkModeEnabled } from '../../../utils/opensearchDashboardsUtils';
-import { BREADCRUMBS, MDS_BREADCRUMBS } from '../../../utils/constants';
+import { BREADCRUMBS, MDS_BREADCRUMBS, USE_NEW_HOME_PAGE } from '../../../utils/constants';
 import { DetectorControls } from '../components/DetectorControls';
 import { ConfirmModal } from '../components/ConfirmModal/ConfirmModal';
 import { useFetchMonitorInfo } from '../hooks/useFetchMonitorInfo';
@@ -70,8 +68,10 @@ import {
   getDataSourceEnabled,
   getNotifications,
   getSavedObjectsClient,
+  getUISettings,
 } from '../../../services';
-import { constructHrefWithDataSourceId, getDataSourceFromURL, isDataSourceCompatible } from '../../../pages/utils/helpers';
+import { constructHrefWithDataSourceId, getDataSourceFromURL } from '../../../pages/utils/helpers';
+import { isServerlessDataSource } from '../../../utils/dataSourceUtils';
 
 export interface DetectorRouterProps {
   detectorId?: string;
@@ -122,6 +122,21 @@ export const DetectorDetail = (props: DetectorDetailProps) => {
   const location = useLocation();
   const MDSQueryParams = getDataSourceFromURL(location);
   const dataSourceId = MDSQueryParams.dataSourceId;
+
+  // Serverless (AOSS) does not support AD historical analysis in P0. Resolve
+  // this once from the data-source saved object and gate the tab, route, and
+  // downstream CTAs accordingly. Starts as false so local-cluster detectors
+  // render immediately; flips to true after the async lookup if applicable.
+  const [isServerless, setIsServerless] = useState<boolean>(false);
+  useEffect(() => {
+    let cancelled = false;
+    isServerlessDataSource(dataSourceId).then((result) => {
+      if (!cancelled) setIsServerless(result);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [dataSourceId]);
 
   const { detector, hasError, isLoadingDetector, errorMessage } =
     useFetchDetectorInfo(detectorId, dataSourceId);
@@ -194,6 +209,8 @@ export const DetectorDetail = (props: DetectorDetailProps) => {
       showMonitorCalloutModal: false,
       deleteTyped: false,
     });
+
+  const useUpdatedUX = getUISettings().get(USE_NEW_HOME_PAGE);
 
   useHideSideNavBar(true, false);
 
@@ -430,12 +447,25 @@ export const DetectorDetail = (props: DetectorDetailProps) => {
           fullWidth: false,
           savedObjects: getSavedObjectsClient(),
           notifications: getNotifications(),
-          dataSourceFilter: isDataSourceCompatible,
         }}
       />
     );
   }
 
+  const renderPageHeader = () => {
+    if (useUpdatedUX) {
+      return null;
+    } else {
+      return (
+        <EuiFlexItem grow={false}>
+          <EuiText size="s" data-test-subj="detectorNameHeader">
+            <h1>{detector && detector.name}</h1>
+          </EuiText>
+        </EuiFlexItem>
+      );
+    }
+  };
+  
   return (
     <React.Fragment>
       {!isEmpty(detector) && !hasError ? (
@@ -452,12 +482,7 @@ export const DetectorDetail = (props: DetectorDetailProps) => {
             justifyContent="spaceBetween"
             style={{ padding: '10px' }}
           >
-            <EuiFlexItem grow={false}>
-              <EuiTitle size="l" data-test-subj="detectorNameHeader">
-                {<h1>{detector && detector.name} </h1>}
-              </EuiTitle>
-            </EuiFlexItem>
-
+            {renderPageHeader()}
             <EuiFlexItem grow={false}>
               <DetectorControls
                 onEditDetector={handleEditDetector}
@@ -501,19 +526,24 @@ export const DetectorDetail = (props: DetectorDetailProps) => {
 
           <EuiFlexGroup>
             <EuiFlexItem>
-              <EuiTabs>
-                {tabs.map((tab) => (
-                  <EuiTab
-                    onClick={() => {
-                      handleTabChange(tab.route);
-                    }}
-                    isSelected={tab.id === detectorDetailModel.selectedTab}
-                    key={tab.id}
-                    data-test-subj={`${tab.id}Tab`}
-                  >
-                    {tab.name}
-                  </EuiTab>
-                ))}
+              <EuiTabs size="s">
+                {tabs
+                  .filter(
+                    (tab) =>
+                      !(isServerless && tab.id === DETECTOR_DETAIL_TABS.HISTORICAL)
+                  )
+                  .map((tab) => (
+                    <EuiTab
+                      onClick={() => {
+                        handleTabChange(tab.route);
+                      }}
+                      isSelected={tab.id === detectorDetailModel.selectedTab}
+                      key={tab.id}
+                      data-test-subj={`${tab.id}Tab`}
+                    >
+                      {tab.name}
+                    </EuiTab>
+                  ))}
               </EuiTabs>
             </EuiFlexItem>
           </EuiFlexGroup>
@@ -530,7 +560,7 @@ export const DetectorDetail = (props: DetectorDetailProps) => {
             description={
               <EuiFlexGroup direction="column">
                 <EuiFlexItem>
-                  <EuiText>
+                  <EuiText size="s">
                     <p>
                       Detector and feature configuration will be permanently
                       removed. This action is irreversible. To confirm deletion,
@@ -539,7 +569,7 @@ export const DetectorDetail = (props: DetectorDetailProps) => {
                   </EuiText>
                 </EuiFlexItem>
                 <EuiFlexItem grow={true}>
-                  <EuiFieldText
+                  <EuiCompressedFieldText
                     data-test-subj="typeDeleteField"
                     fullWidth={true}
                     placeholder="delete"
@@ -634,19 +664,22 @@ export const DetectorDetail = (props: DetectorDetailProps) => {
               onStopDetector={() => handleStopAdJob(detectorId)}
               onSwitchToConfiguration={handleSwitchToConfigurationTab}
               onSwitchToHistorical={handleSwitchToHistoricalTab}
+              isServerless={isServerless}
             />
           )}
         />
-        <Route
-          exact
-          path="/detectors/:detectorId/historical"
-          render={(configProps) => (
-            <HistoricalDetectorResults
-              {...configProps}
-              detectorId={detectorId}
-            />
-          )}
-        />
+        {!isServerless ? (
+          <Route
+            exact
+            path="/detectors/:detectorId/historical"
+            render={(configProps) => (
+              <HistoricalDetectorResults
+                {...configProps}
+                detectorId={detectorId}
+              />
+            )}
+          />
+        ) : null}
         <Route
           exact
           path="/detectors/:detectorId/configurations"

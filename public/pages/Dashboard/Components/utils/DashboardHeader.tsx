@@ -11,18 +11,21 @@
 
 import React from 'react';
 import {
-  EuiButton,
+  EuiSmallButton,
   EuiFlexGroup,
   EuiFlexItem,
   EuiPageHeader,
-  EuiTitle,
+  EuiText,
 } from '@elastic/eui';
 import {
   PLUGIN_NAME,
   APP_PATH,
+  USE_NEW_HOME_PAGE,
 } from '../../../../utils/constants';
 import { useLocation } from 'react-router-dom';
 import { constructHrefWithDataSourceId, getDataSourceFromURL } from '../../../../pages/utils/helpers';
+import { getApplication, getNavigationUI, getUISettings } from '../../../../services';
+import { TopNavControlButtonData } from '../../../../../../../src/plugins/navigation/public';
 export interface DashboardHeaderProps {
   hasDetectors: boolean;
 }
@@ -32,27 +35,47 @@ export const DashboardHeader = (props: DashboardHeaderProps) => {
   const MDSQueryParams = getDataSourceFromURL(location);
   const dataSourceId = MDSQueryParams.dataSourceId;
   const createDetectorUrl = `${PLUGIN_NAME}#` + constructHrefWithDataSourceId(APP_PATH.CREATE_DETECTOR, dataSourceId, false);
+  const useUpdatedUX = getUISettings().get(USE_NEW_HOME_PAGE);
+  const { HeaderControl } = getNavigationUI();
+  const { setAppRightControls } = getApplication();
 
-  return (
+  return useUpdatedUX ? (
+    <HeaderControl
+      setMountPoint={setAppRightControls}
+      controls={[
+        {
+          id: 'Create detector',
+          label: 'Create detector',
+          iconType: 'plus',
+          fill: true,
+          href: createDetectorUrl,
+          testId: 'add_detector',
+          controlType: 'button',
+        } as TopNavControlButtonData,
+      ]}
+    />
+  ) : (
+    <>
     <EuiPageHeader>
       <EuiFlexGroup justifyContent="spaceBetween">
         <EuiFlexItem grow={false}>
-          <EuiTitle size="l">
+          <EuiText size="s">
             <h1>Real-time dashboard</h1>
-          </EuiTitle>
+          </EuiText>
         </EuiFlexItem>
         {props.hasDetectors ? (
           <EuiFlexItem grow={false}>
-            <EuiButton
+            <EuiSmallButton
               fill
               href={createDetectorUrl}
               data-test-subj="add_detector"
             >
               Create detector
-            </EuiButton>
+            </EuiSmallButton>
           </EuiFlexItem>
         ) : null}
       </EuiFlexGroup>
     </EuiPageHeader>
+    </>
   );
-};
+}

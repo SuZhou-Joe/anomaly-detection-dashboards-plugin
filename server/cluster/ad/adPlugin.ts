@@ -56,6 +56,19 @@ export default function adPlugin(Client: any, config: any, components: any) {
     needBody: true,
     method: 'POST',
   });
+  ad.suggestDetector = ca({
+    url: {
+      fmt: `${API.DETECTOR_BASE}/_suggest/<%=suggestType%>`,
+      req: {
+        suggestType: {
+          type: 'string',
+          required: true,
+        },
+      },
+    },
+    needBody: true,
+    method: 'POST',
+  });
   ad.searchDetector = ca({
     url: {
       fmt: `${API.DETECTOR_BASE}/_search`,
@@ -243,5 +256,26 @@ export default function adPlugin(Client: any, config: any, components: any) {
       needBody: true,
     },
     method: 'POST',
+  });
+
+  ad.startInsights = ca({
+    url: {
+      fmt: `/_plugins/_anomaly_detection/insights/_start`,
+    },
+    method: 'POST',
+  });
+
+  ad.stopInsights = ca({
+    url: {
+      fmt: `/_plugins/_anomaly_detection/insights/_stop`,
+    },
+    method: 'POST',
+  });
+
+  ad.getInsightsStatus = ca({
+    url: {
+      fmt: `/_plugins/_anomaly_detection/insights/_status`,
+    },
+    method: 'GET',
   });
 }

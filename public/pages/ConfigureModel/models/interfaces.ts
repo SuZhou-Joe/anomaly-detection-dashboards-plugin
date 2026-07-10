@@ -18,6 +18,12 @@ export interface ModelConfigurationFormikValues {
   categoryFieldEnabled: boolean;
   categoryField: string[];
   shingleSize: number;
+  imputationOption?: ImputationFormikValues;
+  suppressionRules?: Array<RuleFormikValues[] | null>;
+  interval: number;
+  windowDelay: number;
+  frequency?: number;
+  history?: number;
 }
 
 export interface FeaturesFormikValues {
@@ -29,4 +35,22 @@ export interface FeaturesFormikValues {
   aggregationBy?: string;
   aggregationOf?: AggregationOption[];
   newFeature?: boolean;
+}
+
+export interface ImputationFormikValues {
+  imputationMethod?: string;
+  custom_value?: CustomValueFormikValues[];
+}
+
+export interface CustomValueFormikValues {
+  featureName: string;
+  data: number;
+}
+
+export interface RuleFormikValues {
+  featureName: string;
+  absoluteThreshold?: number;
+  relativeThreshold?: number;
+  aboveBelow: string;
+  directionRule?: boolean;
 }

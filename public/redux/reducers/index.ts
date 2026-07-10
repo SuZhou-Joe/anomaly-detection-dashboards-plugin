@@ -17,7 +17,9 @@ import anomalyResults from './anomalyResults';
 import liveAnomalyResults from './liveAnomalyResults';
 import adAppReducer from './adAppReducer';
 import alertingReducer from './alerting';
-
+import forecastReducer from './forecast';
+import mlReducer from './ml';
+import insightsReducer from './insights';
 const rootReducer = combineReducers({
   opensearch: opensearchReducer,
   anomalies: previewAnomalies,
@@ -26,6 +28,9 @@ const rootReducer = combineReducers({
   ad: adReducer,
   adApp: adAppReducer,
   alerting: alertingReducer,
+  forecast: forecastReducer,
+  ml: mlReducer,
+  insights: insightsReducer,
 });
 
 export default rootReducer;

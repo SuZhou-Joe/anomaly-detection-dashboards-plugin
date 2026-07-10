@@ -14,9 +14,9 @@ import {
   EuiOverlayMask,
   EuiCallOut,
   EuiText,
-  EuiFieldText,
-  EuiButton,
-  EuiButtonEmpty,
+  EuiCompressedFieldText,
+  EuiSmallButton,
+  EuiSmallButtonEmpty,
   EuiFlexGroup,
   EuiModal,
   EuiModalHeader,
@@ -75,7 +75,11 @@ export const ConfirmDeleteDetectorsModal = (
       <EuiModal data-test-subj="deleteDetectorsModal" onClose={props.onHide}>
         <EuiModalHeader>
           <EuiModalHeaderTitle>
-            {'Are you sure you want to delete the selected detectors?'}&nbsp;
+            <EuiText size="s">
+              <h2>
+                {'Are you sure you want to delete the selected detectors?'}&nbsp;
+              </h2>
+            </EuiText>
           </EuiModalHeaderTitle>
         </EuiModalHeader>
         <EuiModalBody>
@@ -95,7 +99,7 @@ export const ConfirmDeleteDetectorsModal = (
             ></EuiCallOut>
           ) : null}
           {containsMonitors || containsEnabled ? <EuiSpacer size="s" /> : null}
-          <EuiText>
+          <EuiText size="s">
             The following detectors and feature configurations will be
             permanently removed. This action is irreversible.
           </EuiText>
@@ -120,13 +124,13 @@ export const ConfirmDeleteDetectorsModal = (
             marginRight: 24,
           }}
         >
-          <EuiText>
+          <EuiText size="s">
             <p>
               To confirm deletion, type <i>delete</i> in the field.
             </p>
           </EuiText>
           <EuiSpacer size="s" />
-          <EuiFieldText
+          <EuiCompressedFieldText
             data-test-subj="typeDeleteField"
             fullWidth={true}
             placeholder="delete"
@@ -141,14 +145,14 @@ export const ConfirmDeleteDetectorsModal = (
         </EuiFlexGroup>
         <EuiModalFooter>
           {isLoading ? null : (
-            <EuiButtonEmpty
+            <EuiSmallButtonEmpty
               data-test-subj="cancelButton"
               onClick={props.onHide}
             >
               Cancel
-            </EuiButtonEmpty>
+            </EuiSmallButtonEmpty>
           )}
-          <EuiButton
+          <EuiSmallButton
             data-test-subj="confirmButton"
             color="danger"
             disabled={!deleteTyped}
@@ -172,7 +176,7 @@ export const ConfirmDeleteDetectorsModal = (
             }}
           >
             {'Delete detectors'}
-          </EuiButton>
+          </EuiSmallButton>
         </EuiModalFooter>
       </EuiModal>
     </EuiOverlayMask>

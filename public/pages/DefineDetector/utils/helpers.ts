@@ -23,18 +23,22 @@ import {
   formikToFilterQuery,
 } from '../../ReviewAndCreate/utils/helpers';
 import { DEFAULT_SHINGLE_SIZE } from '../../../utils/constants';
+import { useSelector } from 'react-redux';
+import { AppState } from '../../../redux/reducers';
+import { getLocalCluster } from '../../../pages/utils/helpers';
+import { ClusterInfo } from '../../../../server/models/types';
 
 export function detectorDefinitionToFormik(
-  ad: Detector
+  ad: Detector,
+  clusters: ClusterInfo[]
 ): DetectorDefinitionFormikValues {
   const initialValues = cloneDeep(INITIAL_DETECTOR_DEFINITION_VALUES);
   if (isEmpty(ad)) return initialValues;
-
   return {
     ...initialValues,
     name: ad.name,
     description: ad.description,
-    index: [{ label: ad.indices[0] }], // Currently we support only one index
+    index: [...ad.indices.map(index => ({ label: index }))],
     resultIndex: ad.resultIndex,
     filters: filtersToFormik(ad),
     filterQuery: JSON.stringify(
@@ -43,13 +47,42 @@ export function detectorDefinitionToFormik(
       4
     ),
     timeField: ad.timeField,
-    interval: get(ad, 'detectionInterval.period.interval', 10),
-    windowDelay: get(ad, 'windowDelay.period.interval', 0),
     resultIndexMinAge: get(ad, 'resultIndexMinAge', undefined),
     resultIndexMinSize:get(ad, 'resultIndexMinSize', undefined),
     resultIndexTtl: get(ad, 'resultIndexTtl', undefined),
     flattenCustomResultIndex: get(ad, 'flattenCustomResultIndex', false),
+    clusters: indicesToClusters(ad.indices, clusters)
   };
+}
+
+export function indicesToClusters(indices: string[], clusters: ClusterInfo[]) {
+  const seenClusters = new Set<string>();
+  const hasLocalCluster = indices.some(index => !index.includes(':'));
+
+  indices.forEach(index => {
+    const [cluster] = index.split(':');
+    if (cluster !== index) {
+      seenClusters.add(cluster);
+    }
+  });
+
+  const clusterOptions = Array.from(seenClusters).map(name => ({
+    label: getClusterOptionLabel({ name, localCluster: false }),
+    cluster: name,
+    localcluster: 'false',
+  }));
+
+  if (hasLocalCluster && clusters) {
+    const [local] = getLocalCluster(clusters);
+    if (local) {
+      clusterOptions.push({
+        label: getClusterOptionLabel(local),
+        cluster: local.name,
+        localcluster: 'true',
+      });
+    }
+  }
+  return clusterOptions;
 }
 
 export function filtersToFormik(detector: Detector): UIFilter[] {
@@ -117,12 +150,6 @@ export function formikToDetectorDefinition(
       filters: get(values, 'filters', []),
     },
     timeField: values.timeField,
-    detectionInterval: {
-      period: { interval: values.interval, unit: UNITS.MINUTES },
-    },
-    windowDelay: {
-      period: { interval: values.windowDelay, unit: UNITS.MINUTES },
-    },
     resultIndexMinAge: values.resultIndexMinAge,
     resultIndexMinSize: values.resultIndexMinSize,
     resultIndexTtl: values.resultIndexTtl,
@@ -144,3 +171,6 @@ export function clearModelConfiguration(ad: Detector): Detector {
     shingleSize: DEFAULT_SHINGLE_SIZE,
   };
 }
+
+  export const getClusterOptionLabel = (clusterInfo: ClusterInfo) =>
+    `${clusterInfo.name} ${clusterInfo.localCluster ? '(Local)' : '(Remote)'}`;

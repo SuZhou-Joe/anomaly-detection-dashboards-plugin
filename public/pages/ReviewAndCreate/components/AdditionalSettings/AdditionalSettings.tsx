@@ -11,29 +11,53 @@
 
 import React from 'react';
 import { get } from 'lodash';
-import { EuiBasicTable } from '@elastic/eui';
+import {
+  EuiBasicTable
+} from '@elastic/eui';
+import ContentPanel from '../../../../components/ContentPanel/ContentPanel';
 
 interface AdditionalSettingsProps {
   shingleSize: number;
   categoryField: string[];
+  imputationMethod: string;
+  customValues: string[];
 }
 
 export function AdditionalSettings(props: AdditionalSettingsProps) {
+  const renderCustomValues = (customValues: string[]) => (
+    <div>
+      {customValues.length > 0 ? (
+        customValues.map((value, index) => <p key={index}>{value}</p>)
+      ) : (
+        <p>-</p>
+      )}
+    </div>
+  );
+
   const tableItems = [
     {
       categoryField: get(props, 'categoryField.0', '-'),
       shingleSize: props.shingleSize,
+      imputationMethod: props.imputationMethod,
+      customValues: props.customValues,
     },
   ];
   const tableColumns = [
     { name: 'Category field', field: 'categoryField' },
     { name: 'Shingle size', field: 'shingleSize' },
+    { name: 'Imputation method', field: 'imputationMethod' },
+    { name: 'Custom values',
+      field: 'customValues',
+      render: (customValues: string[]) => renderCustomValues(customValues), // Use a custom render function
+    },
   ];
   return (
+    <ContentPanel title="Additional settings" titleSize="s">
     <EuiBasicTable
       className="header-single-value-euiBasicTable"
       items={tableItems}
       columns={tableColumns}
     />
+    </ContentPanel>
   );
 }

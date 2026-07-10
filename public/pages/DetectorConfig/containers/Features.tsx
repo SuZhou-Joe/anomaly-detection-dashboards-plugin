@@ -14,23 +14,32 @@ import {
   EuiBasicTable,
   EuiText,
   EuiLink,
-  EuiIcon,
-  EuiButton,
+  EuiSmallButton,
   EuiEmptyPrompt,
   EuiSpacer,
+  EuiOverlayMask,
+  EuiButtonEmpty,
 } from '@elastic/eui';
 import {
   Detector,
   FEATURE_TYPE,
   FeatureAttributes,
 } from '../../../models/interfaces';
-import { get, isEmpty, sortBy } from 'lodash';
-import { PLUGIN_NAME, BASE_DOCS_LINK } from '../../../utils/constants';
+import { get, sortBy } from 'lodash';
+import { PLUGIN_NAME } from '../../../utils/constants';
 import ContentPanel from '../../../components/ContentPanel/ContentPanel';
 import { CodeModal } from '../components/CodeModal/CodeModal';
 import { getTitleWithCount } from '../../../utils/utils';
 import { AdditionalSettings } from '../components/AdditionalSettings/AdditionalSettings';
-import { getShingleSizeFromObject } from '../../ConfigureModel/utils/helpers';
+import {
+  getShingleSizeFromObject,
+  imputationMethodToFormik,
+  getCustomValueStrArray,
+  getSuppressionRulesArray,
+  getSuppressionRulesArrayForFeature,
+} from '../../ConfigureModel/utils/helpers';
+import { SuppressionRulesModal } from '../../ReviewAndCreate/components/SuppressionRulesModal/SuppressionRulesModal';
+import { OperationalSettings } from '../../ReviewAndCreate/components/OperationalSettings/OperationalSettings';
 
 interface FeaturesProps {
   detectorId: string;
@@ -52,6 +61,34 @@ export const Features = (props: FeaturesProps) => {
     sortField: 'name',
     sortDirection: 'asc',
   });
+  const [isRuleModalVisible, setIsRuleModalVisible] = useState(false);
+
+  const [modalContent, setModalContent] = useState<string[]>([]);
+
+  const closeRuleModal = () => setIsRuleModalVisible(false);
+
+  const showRulesInModal = (rules: string[]) => {
+    setModalContent(rules);
+    setIsRuleModalVisible(true);
+  };
+
+  const renderSuppressionRules = (suppressionRules: string[], featureIndex: number) => {
+    return (
+      <div>
+        {suppressionRules.length > 0 ? (
+          <EuiButtonEmpty
+            size="s"
+            data-test-subj={`suppression-rules-button-${featureIndex}`}
+            onClick={() => showRulesInModal(suppressionRules)}
+          >
+            {suppressionRules.length} rules
+          </EuiButtonEmpty>
+        ) : (
+          <p>any</p>
+        )}
+      </div>
+    );
+  };
 
   const closeModal = (index: number) => {
     const cloneShowCodeModal = [...featuresState.showCodeModel];
@@ -105,6 +142,7 @@ export const Features = (props: FeaturesProps) => {
       name: feature.featureName,
       definition: index,
       state: feature.featureEnabled ? 'Enabled' : 'Disabled',
+      suppressionRule: index,
     })
   );
 
@@ -171,6 +209,19 @@ export const Features = (props: FeaturesProps) => {
       field: 'state',
       name: 'Feature state',
     },
+    {
+      field: 'suppressionRule',
+      name: 'Anomaly Criteria',
+      render: (featureIndex: number) => {
+        const feature = featureAttributes[featureIndex];
+        return renderSuppressionRules(
+          getSuppressionRulesArrayForFeature(
+            props.detector,
+            feature.featureName
+          ),featureIndex
+        );
+      },
+    },
   ];
 
   const getCellProps = () => {
@@ -187,6 +238,7 @@ export const Features = (props: FeaturesProps) => {
 
   const previewText = `After you set the model features and other optional parameters, you can
                          preview your anomalies from a sample feature output.`;
+  const imputationMethodStr = imputationMethodToFormik(props.detector);
 
   return (
     <ContentPanel
@@ -194,12 +246,12 @@ export const Features = (props: FeaturesProps) => {
       titleDataTestSubj="modelConfigurationHeader"
       titleSize="s"
       actions={[
-        <EuiButton
+        <EuiSmallButton
           data-test-subj="editModelConfigurationButton"
           onClick={props.onEditFeatures}
         >
           Edit
-        </EuiButton>,
+        </EuiSmallButton>,
       ]}
     >
       {featureNum == 0 ? (
@@ -218,13 +270,13 @@ export const Features = (props: FeaturesProps) => {
             </EuiText>
           }
           actions={[
-            <EuiButton
+            <EuiSmallButton
               data-test-subj="createButton"
               href={`${PLUGIN_NAME}#/detectors/${props.detectorId}/features`}
               fill
             >
               Configure model
-            </EuiButton>,
+            </EuiSmallButton>,
           ]}
         />
       ) : (
@@ -241,11 +293,27 @@ export const Features = (props: FeaturesProps) => {
               sorting={sorting}
               onChange={handleTableChange}
             />
+            {isRuleModalVisible && (
+              <EuiOverlayMask>
+                <SuppressionRulesModal
+                  onClose={closeRuleModal}
+                  rules={modalContent}
+                />
+              </EuiOverlayMask>
+            )}
           </ContentPanel>
+          <EuiSpacer size="m" />
+          <OperationalSettings detector={props.detector} />
           <EuiSpacer size="m" />
           <AdditionalSettings
             shingleSize={shingleSize}
             categoryField={get(props.detector, 'categoryField', [])}
+            imputationMethod={imputationMethodStr}
+            customValues={getCustomValueStrArray(
+              imputationMethodStr,
+              props.detector
+            )}
+            suppressionRules={getSuppressionRulesArray(props.detector)}
           />
         </div>
       )}

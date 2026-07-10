@@ -11,10 +11,14 @@
 
 import { InitProgress } from '../../server/models/interfaces';
 import { DATA_TYPES } from '../utils/constants';
-import { DETECTOR_STATE } from '../../server/utils/constants';
+import { DETECTOR_STATE, FORECASTER_STATE } from '../../server/utils/constants';
 import { Duration } from 'moment';
 import moment from 'moment';
 import { MDSQueryParams } from '../../server/models/types';
+import {
+  ImputationOption,
+  Rule
+} from './types';
 
 export type FieldInfo = {
   label: string;
@@ -193,7 +197,9 @@ export type Detector = {
   flattenCustomResultIndex?: boolean;
   filterQuery: { [key: string]: any };
   featureAttributes: FeatureAttributes[];
-  windowDelay: { period: Schedule };
+  windowDelay?: { period: Schedule };
+  frequency?: { period: Schedule };
+  history?: number;
   detectionInterval: { period: Schedule };
   shingleSize: number;
   uiMetadata: UiMetaData;
@@ -210,6 +216,9 @@ export type Detector = {
   taskState?: DETECTOR_STATE;
   taskProgress?: number;
   taskError?: string;
+  imputationOption?: ImputationOption;
+  rules?: Rule[];
+  auto_created: boolean;
 };
 
 export type DetectorListItem = {
@@ -223,6 +232,57 @@ export type DetectorListItem = {
   lastUpdateTime: number;
   enabledTime?: number;
   detectorType?: string;
+  auto_created?: boolean;
+};
+
+export type Forecaster = {
+  primaryTerm: number;
+  seqNo: number;
+  id: string;
+  name: string;
+  description: string;
+  timeField: string;
+  indices: string[];
+  resultIndex?: string;
+  resultIndexMinAge?: number;
+  resultIndexMinSize?: number;
+  resultIndexTtl?: number;
+  flattenCustomResultIndex?: boolean;
+  filterQuery: { [key: string]: any };
+  featureAttributes: FeatureAttributes[];
+  windowDelay: { period: Schedule };
+  forecastInterval: { period: Schedule };
+  shingleSize: number;
+  uiMetadata: UiMetaData;
+  lastUpdateTime: number;
+  enabled?: boolean;
+  enabledTime?: number;
+  disabledTime?: number;
+  curState: FORECASTER_STATE; // combined state of realTime and runOnce
+  stateError: string; // combined error of realTime and runOnce
+  initProgress?: InitProgress; // realTime
+  categoryField?: string[];
+  taskId?: string; // runOnce
+  taskState?: FORECASTER_STATE; // runOnce
+  taskProgress?: number; // runOnce
+  taskError?: string; // runOnce
+  lastStateUpdateTime?: number;
+  imputationOption?: ImputationOption;
+  suggestedSeasonality?: number;
+  recencyEmphasis?: number;
+  horizon?: number;
+  history?: number;
+  lastUiBreakingChangeTime?: number;
+};
+
+export type ForecasterListItem = {
+  id: string;
+  name: string;
+  indices: string[];
+  curState: FORECASTER_STATE;
+  realTimeLastUpdateTime: number;
+  runOnceLastUpdateTime: number;
+  stateError: string;
 };
 
 export type EntityData = {
@@ -336,3 +396,31 @@ export interface MDSStates {
   queryParams: MDSQueryParams;
   selectedDataSourceId: string | undefined;
 }
+
+/* export type ForecastData = {
+  dataQuality: number;
+  forecasterId?: string;
+  endTime: number;
+  startTime: number;
+  plotTime?: number;
+  entity?: EntityData[];
+  features?: { [key: string]: ForecastFeatureAggregationData };
+  aggInterval?: string;
+}; */
+
+export type ForecastFeatureAggregationData = {
+  data: number;
+  name?: string;
+  endTime: number;
+  startTime: number;
+  plotTime?: number;
+  lowerBound: number[];
+  upperBound: number[];
+  forecastValue: number[];
+  forecastStartTime: number[];
+  forecastEndTime: number[];
+};
+
+/* export type ForecastResult = {
+  forecastResult: ForecastData[];
+}; */

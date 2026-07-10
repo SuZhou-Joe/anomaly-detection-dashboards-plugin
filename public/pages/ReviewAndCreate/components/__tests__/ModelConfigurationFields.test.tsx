@@ -6,7 +6,7 @@
 import React from 'react';
 import chance from 'chance';
 import userEvent from '@testing-library/user-event';
-import { render, waitFor } from '@testing-library/react';
+import { render, waitFor, fireEvent, screen, within } from '@testing-library/react';
 import { ModelConfigurationFields } from '../ModelConfigurationFields/ModelConfigurationFields';
 import {
   Detector,
@@ -19,11 +19,35 @@ import { DATA_TYPES } from '../../../../utils/constants';
 import { getRandomFeature } from '../../../../redux/reducers/__tests__/utils';
 import { CoreServicesContext } from '../../../../components/CoreServices/CoreServices';
 import { coreServicesMock } from '../../../../../test/mocks';
+import {
+  ImputationMethod,
+  ThresholdType,
+  Action,
+  Operator,
+  Rule
+} from '../../../../models/types';
+import { Provider } from 'react-redux';
+import { MemoryRouter as Router, Route, Switch } from 'react-router-dom';
+import { Formik } from 'formik';
+import configureStore from 'redux-mock-store';
 
 const detectorFaker = new chance('seed');
 const features = new Array(detectorFaker.natural({ min: 1, max: 5 }))
   .fill(null)
   .map(() => getRandomFeature(false));
+
+// Generate rules based on the existing features
+const rules = features.map((feature, index) => ({
+  action: Action.IGNORE_ANOMALY,
+  conditions: [
+    {
+      featureName: feature.featureName,
+      thresholdType: index % 2 === 0 ? ThresholdType.ACTUAL_OVER_EXPECTED_MARGIN : ThresholdType.EXPECTED_OVER_ACTUAL_RATIO, // Alternate threshold types for variety
+      operator: Operator.LTE,
+      value: index % 2 === 0 ? 5 : 0.1, // Use different values for variety
+    },
+  ],
+})) as Rule[];
 
 const testDetector = {
   id: 'test-id',
@@ -59,12 +83,14 @@ const testDetector = {
     ],
   },
   featureAttributes: features,
+  imputationOption: { method: ImputationMethod.ZERO},
+  rules: rules
 } as Detector;
 
 describe('ModelConfigurationFields', () => {
   test('renders the component in create mode (no ID)', async () => {
     const onEditModelConfiguration = jest.fn();
-    const { container, getByText, getByTestId, queryByText } = render(
+    const { container, getByText, getByTestId, queryByText, getAllByRole, queryByRole } = render(
       <CoreServicesContext.Provider value={coreServicesMock}>
         <ModelConfigurationFields
           detector={testDetector}
@@ -78,9 +104,60 @@ describe('ModelConfigurationFields', () => {
       </CoreServicesContext.Provider>
     );
     expect(container.firstChild).toMatchSnapshot();
-    userEvent.click(getByTestId('viewFeature-0'));
+    getByText('set_to_zero');
+
+// Check for the suppression rules buttons with the name '1 rules'
+const buttons = getAllByRole('button', { name: '1 rules' });
+expect(buttons).toHaveLength(2);
+    const user = userEvent.setup();
+    await user.click(getByTestId('viewFeature-0'));
     await waitFor(() => {
       queryByText('max');
     });
+  });
+});
+
+describe('ModelConfigurationFields with router', () => {
+  const mockStore = configureStore();
+  const store = mockStore({});
+
+  const renderWithRouter = (isCreatingDetector: boolean = false, testDetector: Detector) => {
+    const onEditModelConfiguration = jest.fn();
+    return {
+      ...render(
+        <Provider store={store}>
+          <Router>
+            <Switch>
+              <Route
+                render={() => (
+                  <CoreServicesContext.Provider value={coreServicesMock}>
+                    <Formik initialValues={{}} onSubmit={jest.fn()}>
+                      {() => (
+                        <ModelConfigurationFields
+                          detector={testDetector}
+                          onEditModelConfiguration={onEditModelConfiguration}
+                          validationFeatureResponse={{} as ValidationModelResponse}
+                          validModel={true}
+                          validationError={false}
+                          isLoading={false}
+                          isCreatingDetector={isCreatingDetector}
+                        />
+                      )}
+                    </Formik>
+                  </CoreServicesContext.Provider>
+                )}
+              />
+            </Switch>
+          </Router>
+        </Provider>
+      ),
+    };
+  };
+
+  test('renders the component in create mode with router', async () => {
+    // getAllByText tolerates multiple matches
+    const { getAllByText, getByText } = renderWithRouter(true, testDetector);
+    expect(getAllByText('10 Minutes').length).toBeGreaterThan(0);
+    getByText('1 Minutes');
   });
 });

@@ -1,11 +1,16 @@
 {
   "id": "anomalyDetectionDashboards",
-  "version": "3.0.0.0",
-  "opensearchDashboardsVersion": "3.0.0",
+  "version": "3.7.0.0",
+  "opensearchDashboardsVersion": "3.7.0",
   "configPath": [
     "anomaly_detection_dashboards"
   ],
-  "optionalPlugins": ["dataSource","dataSourceManagement"],
+  "optionalPlugins": [
+    "dataSource",
+    "dataSourceManagement",
+    "assistantDashboards",
+    "usageCollection"
+  ],
   "requiredPlugins": [
     "opensearchDashboardsUtils",
     "expressions",
@@ -17,10 +22,14 @@
     "opensearchDashboardsReact",
     "savedObjects",
     "visAugmenter",
-    "opensearchDashboardsUtils"
+    "opensearchDashboardsUtils",
+    "navigation"
   ],
   "server": true,
   "ui": true,
   "supportedOSDataSourceVersions": ">=2.9.0",
-  "requiredOSDataSourcePlugins": ["opensearch-anomaly-detection"]
+  "unsupportedOSDataSourceEngineTypes": ["AnalyticEngine"],
+  "requiredOSDataSourcePlugins": [
+    "opensearch-anomaly-detection"
+  ]
 }

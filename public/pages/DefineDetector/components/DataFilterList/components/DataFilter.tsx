@@ -12,14 +12,15 @@
 import {
   EuiFlexGroup,
   EuiFlexItem,
-  EuiButton,
+  EuiSmallButton,
   EuiBadge,
+  EuiSmallButtonEmpty,
   EuiButtonEmpty,
   EuiPopover,
   EuiPopoverTitle,
   EuiText,
-  EuiSwitch,
-  EuiFieldText,
+  EuiCompressedSwitch,
+  EuiCompressedFieldText,
   EuiSpacer,
 } from '@elastic/eui';
 import React, { useState, useEffect } from 'react';
@@ -206,6 +207,13 @@ export const DataFilter = (props: DataFilterProps) => {
         openPopover();
       }}
       onClickAriaLabel="onClick event for the button"
+      style={{
+        maxWidth: 'min(300px, 70vw)',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap',
+        display: 'inline-block',
+      }}
     >
       {labelToDisplay}
     </EuiBadge>
@@ -252,7 +260,7 @@ export const DataFilter = (props: DataFilterProps) => {
               </EuiText>
             </EuiFlexItem>
             <EuiFlexItem grow={false}>
-              <EuiButtonEmpty
+              <EuiSmallButtonEmpty
                 data-test-subj="filterTypeButton"
                 onClick={() => {
                   filterType === FILTER_TYPES.SIMPLE
@@ -263,7 +271,7 @@ export const DataFilter = (props: DataFilterProps) => {
                 {filterType === FILTER_TYPES.SIMPLE
                   ? 'Use query DSL'
                   : 'Use visual editor'}
-              </EuiButtonEmpty>
+              </EuiSmallButtonEmpty>
             </EuiFlexItem>
           </EuiFlexGroup>
         </EuiPopoverTitle>
@@ -286,7 +294,7 @@ export const DataFilter = (props: DataFilterProps) => {
         <EuiFlexGroup direction="column" style={{ margin: '0px' }}>
           <EuiFlexGroup direction="column">
             <EuiFlexItem>
-              <EuiSwitch
+              <EuiCompressedSwitch
                 data-test-subj={'switchForCustomLabel'}
                 label={<EuiText>Create custom label?</EuiText>}
                 checked={isCustomLabel}
@@ -299,7 +307,7 @@ export const DataFilter = (props: DataFilterProps) => {
             {isCustomLabel ? (
               <EuiFlexItem>
                 <FormattedFormRow title="Custom label">
-                  <EuiFieldText
+                  <EuiCompressedFieldText
                     name="customLabel"
                     id="customLabel"
                     placeholder="Enter a value"
@@ -319,7 +327,7 @@ export const DataFilter = (props: DataFilterProps) => {
             gutterSize="s"
           >
             <EuiFlexItem grow={false}>
-              <EuiButtonEmpty
+              <EuiSmallButtonEmpty
                 id="cancelSaveFilterButton"
                 data-test-subj={`cancelFilter${props.index}Button`}
                 onClick={() => {
@@ -328,10 +336,10 @@ export const DataFilter = (props: DataFilterProps) => {
                 }}
               >
                 Cancel
-              </EuiButtonEmpty>
+              </EuiSmallButtonEmpty>
             </EuiFlexItem>
             <EuiFlexItem grow={false}>
-              <EuiButton
+              <EuiSmallButton
                 id="saveFilterButton"
                 fill={true}
                 data-test-subj={`saveFilter${props.index}Button`}
@@ -349,7 +357,7 @@ export const DataFilter = (props: DataFilterProps) => {
                 }}
               >
                 Save
-              </EuiButton>
+              </EuiSmallButton>
             </EuiFlexItem>
           </EuiFlexGroup>
         </EuiFlexGroup>

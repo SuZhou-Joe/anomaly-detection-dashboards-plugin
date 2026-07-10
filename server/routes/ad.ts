@@ -29,6 +29,7 @@ import {
   toCamel,
   toFixedNumberForAnomaly,
 } from '../utils/helpers';
+import { isServerlessDataSource } from '../utils/dataSourceUtils';
 import {
   anomalyResultMapper,
   convertDetectorKeysToCamelCase,
@@ -71,8 +72,15 @@ export function registerADRoutes(apiRouter: Router, adService: AdService) {
     adService.putDetector
   );
 
+  // routes not used in the UI, therefore no data source id
   apiRouter.post('/detectors/_search', adService.searchDetector);
 
+  // search tasks
+  apiRouter.post('/detectors/tasks/_search', adService.searchTasks);
+  apiRouter.post(
+    '/detectors/tasks/_search/{dataSourceId}',
+    adService.searchTasks
+  );
   // post search anomaly results
   apiRouter.post('/detectors/results/_search', adService.searchResults);
   apiRouter.post(
@@ -95,6 +103,16 @@ export function registerADRoutes(apiRouter: Router, adService: AdService) {
   // preview detector
   apiRouter.post('/detectors/preview', adService.previewDetector);
   apiRouter.post('/detectors/preview/{dataSourceId}', adService.previewDetector);
+
+  // suggest detector
+  apiRouter.post(
+    '/detectors/_suggest/{suggestType}',
+    adService.suggestDetector
+  );
+  apiRouter.post(
+    '/detectors/_suggest/{suggestType}/{dataSourceId}',
+    adService.suggestDetector
+  );
 
   // get detector anomaly results
   apiRouter.get(
@@ -177,23 +195,40 @@ export function registerADRoutes(apiRouter: Router, adService: AdService) {
     '/detectors/_validate/{validationType}/{dataSourceId}',
     adService.validateDetector
   );
+
+  // start insights job
+  apiRouter.post('/insights/_start', adService.startInsights);
+  apiRouter.post('/insights/_start/{dataSourceId}', adService.startInsights);
+
+  // stop insights job
+  apiRouter.post('/insights/_stop', adService.stopInsights);
+  apiRouter.post('/insights/_stop/{dataSourceId}', adService.stopInsights);
+
+  // get insights status
+  apiRouter.get('/insights/_status', adService.getInsightsStatus);
+  apiRouter.get('/insights/_status/{dataSourceId}', adService.getInsightsStatus);
+
+  // get insights results
+  apiRouter.get('/insights/_results', adService.getInsightsResults);
+  apiRouter.get('/insights/_results/{dataSourceId}', adService.getInsightsResults);
 }
 
-export default class AdService {
-  private client: any;
-  dataSourceEnabled: boolean;
+import { MDSEnabledClientService } from '../services/MDSEnabledClientService';
 
-  constructor(client: any, dataSourceEnabled: boolean) {
-    this.client = client;
-    this.dataSourceEnabled = dataSourceEnabled;
-  }
-
+export default class AdService extends MDSEnabledClientService {
   deleteDetector = async (
     context: RequestHandlerContext,
     request: OpenSearchDashboardsRequest,
     opensearchDashboardsResponse: OpenSearchDashboardsResponseFactory
   ): Promise<IOpenSearchDashboardsResponse<any>> => {
     try {
+      const aclResponse = await this.enforceWorkspaceAcl(
+        context,
+        request,
+        opensearchDashboardsResponse,
+        ['library_write']
+      );
+      if (aclResponse) return aclResponse;
       const { detectorId } = request.params as { detectorId: string };
       const { dataSourceId = '' } = request.params as { dataSourceId?: string };
       const callWithRequest = getClientBasedOnDataSource(
@@ -231,6 +266,13 @@ export default class AdService {
     opensearchDashboardsResponse: OpenSearchDashboardsResponseFactory
   ): Promise<IOpenSearchDashboardsResponse<any>> => {
     try {
+      const aclResponse = await this.enforceWorkspaceAcl(
+        context,
+        request,
+        opensearchDashboardsResponse,
+        ['library_write']
+      );
+      if (aclResponse) return aclResponse;
       const { dataSourceId = '' } = request.params as { dataSourceId?: string };
 
       const requestBody = JSON.stringify(
@@ -267,12 +309,70 @@ export default class AdService {
     }
   };
 
+  suggestDetector = async (
+    context: RequestHandlerContext,
+    request: OpenSearchDashboardsRequest,
+    opensearchDashboardsResponse: OpenSearchDashboardsResponseFactory
+  ): Promise<IOpenSearchDashboardsResponse<any>> => {
+    try {
+      const aclResponse = await this.enforceWorkspaceAcl(
+        context,
+        request,
+        opensearchDashboardsResponse,
+        ['library_write', 'library_read']
+      );
+      if (aclResponse) return aclResponse;
+      let { suggestType } = request.params as {
+        suggestType: string;
+      };
+      const { dataSourceId = '' } = request.params as { dataSourceId?: string };
+
+      const callWithRequest = getClientBasedOnDataSource(
+        context,
+        this.dataSourceEnabled,
+        request,
+        dataSourceId,
+        this.client
+      );
+
+      const requestBody = JSON.stringify(
+        convertDetectorKeysToSnakeCase(request.body)
+      );
+      const response = await callWithRequest(
+        'ad.suggestDetector', {
+          body: requestBody,
+          suggestType: suggestType,
+        });
+      return opensearchDashboardsResponse.ok({
+        body: {
+          ok: true,
+          response: response,
+        },
+      });
+    } catch (err) {
+      console.log('Anomaly detector - suggestDetector', err);
+      return opensearchDashboardsResponse.ok({
+        body: {
+          ok: false,
+          error: getErrorMessage(err),
+        },
+      });
+    }
+  };
+
   putDetector = async (
     context: RequestHandlerContext,
     request: OpenSearchDashboardsRequest,
     opensearchDashboardsResponse: OpenSearchDashboardsResponseFactory
   ): Promise<IOpenSearchDashboardsResponse<any>> => {
     try {
+      const aclResponse = await this.enforceWorkspaceAcl(
+        context,
+        request,
+        opensearchDashboardsResponse,
+        ['library_write']
+      );
+      if (aclResponse) return aclResponse;
       const { detectorId } = request.params as { detectorId: string };
       const { dataSourceId = '' } = request.params as { dataSourceId?: string };
 
@@ -336,6 +436,13 @@ export default class AdService {
     opensearchDashboardsResponse: OpenSearchDashboardsResponseFactory
   ): Promise<IOpenSearchDashboardsResponse<any>> => {
     try {
+      const aclResponse = await this.enforceWorkspaceAcl(
+        context,
+        request,
+        opensearchDashboardsResponse,
+        ['library_write', 'library_read']
+      );
+      if (aclResponse) return aclResponse;
       let { validationType } = request.params as {
         validationType: string;
       };
@@ -374,12 +481,202 @@ export default class AdService {
     }
   };
 
+  startInsights = async (
+    context: RequestHandlerContext,
+    request: OpenSearchDashboardsRequest,
+    opensearchDashboardsResponse: OpenSearchDashboardsResponseFactory
+  ): Promise<IOpenSearchDashboardsResponse<any>> => {
+    try {
+      const { dataSourceId = '' } = request.params as { dataSourceId?: string };
+
+      const callWithRequest = getClientBasedOnDataSource(
+        context,
+        this.dataSourceEnabled,
+        request,
+        dataSourceId,
+        this.client
+      );
+
+      const response = await callWithRequest('ad.startInsights', {});
+      return opensearchDashboardsResponse.ok({
+        body: {
+          ok: true,
+          response: response,
+          message: 'Insights job started successfully',
+        },
+      });
+    } catch (err) {
+      console.log('Anomaly detector - startInsights', err);
+      return opensearchDashboardsResponse.ok({
+        body: {
+          ok: false,
+          error: getErrorMessage(err),
+        },
+      });
+    }
+  };
+
+  stopInsights = async (
+    context: RequestHandlerContext,
+    request: OpenSearchDashboardsRequest,
+    opensearchDashboardsResponse: OpenSearchDashboardsResponseFactory
+  ): Promise<IOpenSearchDashboardsResponse<any>> => {
+    try {
+      const { dataSourceId = '' } = request.params as { dataSourceId?: string };
+
+      const callWithRequest = getClientBasedOnDataSource(
+        context,
+        this.dataSourceEnabled,
+        request,
+        dataSourceId,
+        this.client
+      );
+
+      const response = await callWithRequest('ad.stopInsights', {});
+      return opensearchDashboardsResponse.ok({
+        body: {
+          ok: true,
+          response: response,
+          message: 'Insights job stopped successfully',
+        },
+      });
+    } catch (err) {
+      console.log('Anomaly detector - stopInsights', err);
+      return opensearchDashboardsResponse.ok({
+        body: {
+          ok: false,
+          error: getErrorMessage(err),
+        },
+      });
+    }
+  };
+
+  getInsightsStatus = async (
+    context: RequestHandlerContext,
+    request: OpenSearchDashboardsRequest,
+    opensearchDashboardsResponse: OpenSearchDashboardsResponseFactory
+  ): Promise<IOpenSearchDashboardsResponse<any>> => {
+    try {
+      const { dataSourceId = '' } = request.params as { dataSourceId?: string };
+
+      const callWithRequest = getClientBasedOnDataSource(
+        context,
+        this.dataSourceEnabled,
+        request,
+        dataSourceId,
+        this.client
+      );
+
+      const response = await callWithRequest('ad.getInsightsStatus', {});
+      return opensearchDashboardsResponse.ok({
+        body: {
+          ok: true,
+          response: response,
+        },
+      });
+    } catch (err) {
+      console.log('Anomaly detector - getInsightsStatus', err);
+      return opensearchDashboardsResponse.ok({
+        body: {
+          ok: false,
+          error: getErrorMessage(err),
+        },
+      });
+    }
+  };
+
+  getInsightsResults = async (
+    context: RequestHandlerContext,
+    request: OpenSearchDashboardsRequest,
+    opensearchDashboardsResponse: OpenSearchDashboardsResponseFactory
+  ): Promise<IOpenSearchDashboardsResponse<any>> => {
+    try {
+      const { dataSourceId = '' } = request.params as { dataSourceId?: string };
+      const { detector_id, index, from, size } = (request.query || {}) as {
+        detector_id?: string;
+        index?: string;
+        from?: string;
+        size?: string;
+      };
+
+      const callWithRequest = getClientBasedOnDataSource(
+        context,
+        this.dataSourceEnabled,
+        request,
+        dataSourceId,
+        this.client
+      );
+
+      const fromNum = from ? Number(from) : 0;
+      const sizeNum = size ? Number(size) : 20;
+
+      const must: any[] = [];
+      if (detector_id) {
+        must.push({ term: { doc_detector_ids: detector_id } });
+      }
+      if (index) {
+        must.push({ term: { doc_indices: index } });
+      }
+
+      const searchBody = {
+        query: must.length > 0 ? { bool: { must } } : { match_all: {} },
+        from: Number.isFinite(fromNum) ? fromNum : 0,
+        size: Number.isFinite(sizeNum) ? sizeNum : 20,
+        sort: [{ generated_at: { order: 'desc' as const } }],
+      };
+
+      const searchResp = await callWithRequest('search', {
+        index: 'opensearch-ad-plugin-insights',
+        body: searchBody,
+      });
+
+      const hits = searchResp?.hits?.hits || [];
+      const totalHits = searchResp?.hits?.total?.value ?? 0;
+      const response = {
+        total_hits: totalHits,
+        results: hits.map((h: any) => h?._source).filter(Boolean),
+      };
+      return opensearchDashboardsResponse.ok({
+        body: {
+          ok: true,
+          response: response,
+        },
+      });
+    } catch (err) {
+      // If insights index doesn't exist yet, return empty results.
+      const errType = (err as any)?.body?.error?.type;
+      const statusCode = (err as any)?.statusCode;
+      if (statusCode === 404 || errType === 'index_not_found_exception') {
+        return opensearchDashboardsResponse.ok({
+          body: {
+            ok: true,
+            response: { total_hits: 0, results: [] },
+          },
+        });
+      }
+      console.log('Anomaly detector - getInsightsResults', err);
+      return opensearchDashboardsResponse.ok({
+        body: {
+          ok: false,
+          error: getErrorMessage(err),
+        },
+      });
+    }
+  };
+
   getDetector = async (
     context: RequestHandlerContext,
     request: OpenSearchDashboardsRequest,
     opensearchDashboardsResponse: OpenSearchDashboardsResponseFactory
   ): Promise<IOpenSearchDashboardsResponse<any>> => {
     try {
+      const aclResponse = await this.enforceWorkspaceAcl(
+        context,
+        request,
+        opensearchDashboardsResponse,
+        ['library_write', 'library_read']
+      );
+      if (aclResponse) return aclResponse;
       const { detectorId } = request.params as { detectorId: string };
       const { dataSourceId = '' } = request.params as { dataSourceId?: string };
       const callWithRequest = getClientBasedOnDataSource(
@@ -487,6 +784,13 @@ export default class AdService {
     opensearchDashboardsResponse: OpenSearchDashboardsResponseFactory
   ): Promise<IOpenSearchDashboardsResponse<any>> => {
     try {
+      const aclResponse = await this.enforceWorkspaceAcl(
+        context,
+        request,
+        opensearchDashboardsResponse,
+        ['library_write']
+      );
+      if (aclResponse) return aclResponse;
       const { detectorId } = request.params as { detectorId: string };
       const { dataSourceId = '' } = request.params as { dataSourceId?: string };
       //@ts-ignore
@@ -505,6 +809,24 @@ export default class AdService {
           },
         };
         requestPath = 'ad.startHistoricalDetector';
+      }
+
+      // Historical analysis is unsupported on OpenSearch Serverless in P0
+      // (see AD serverless design doc, Milestone 2). The dashboard frontend
+      // hides the entry points (PR #1189) but we defend-in-depth here so
+      // direct API callers also get a clear 501 rather than a 404/500 from
+      // the backend.
+      if (
+        requestPath === 'ad.startHistoricalDetector' &&
+        (await this.isUnsupportedEndpoint(context, request))
+      ) {
+        return opensearchDashboardsResponse.custom({
+          statusCode: 501,
+          body: {
+            message:
+              'Historical analysis is not supported on OpenSearch Serverless.',
+          },
+        });
       }
 
       const callWithRequest = getClientBasedOnDataSource(
@@ -540,6 +862,13 @@ export default class AdService {
     opensearchDashboardsResponse: OpenSearchDashboardsResponseFactory
   ): Promise<IOpenSearchDashboardsResponse<any>> => {
     try {
+      const aclResponse = await this.enforceWorkspaceAcl(
+        context,
+        request,
+        opensearchDashboardsResponse,
+        ['library_write']
+      );
+      if (aclResponse) return aclResponse;
       let { detectorId, isHistorical } = request.params as {
         detectorId: string;
         isHistorical: any;
@@ -550,6 +879,25 @@ export default class AdService {
       const requestPath = isHistorical
         ? 'ad.stopHistoricalDetector'
         : 'ad.stopDetector';
+
+      // Defense-in-depth 501 for historical stop on serverless — see
+      // startDetector for rationale. Running detectors cannot exist on
+      // serverless because startHistoricalDetector is already blocked, but
+      // a stale client that retained a detector ID from a pre-serverless
+      // period should receive a clear 501 rather than hit an unsupported
+      // plugin endpoint.
+      if (
+        isHistorical &&
+        (await this.isUnsupportedEndpoint(context, request))
+      ) {
+        return opensearchDashboardsResponse.custom({
+          statusCode: 501,
+          body: {
+            message:
+              'Historical analysis is not supported on OpenSearch Serverless.',
+          },
+        });
+      }
 
       const callWithRequest = getClientBasedOnDataSource(
         context,
@@ -586,6 +934,13 @@ export default class AdService {
     opensearchDashboardsResponse: OpenSearchDashboardsResponseFactory
   ): Promise<IOpenSearchDashboardsResponse<any>> => {
     try {
+      const aclResponse = await this.enforceWorkspaceAcl(
+        context,
+        request,
+        opensearchDashboardsResponse,
+        ['library_write', 'library_read']
+      );
+      if (aclResponse) return aclResponse;
       const { detectorId } = request.params as { detectorId: string };
       const response = await this.client
         .asScoped(request)
@@ -615,6 +970,13 @@ export default class AdService {
     opensearchDashboardsResponse: OpenSearchDashboardsResponseFactory
   ): Promise<IOpenSearchDashboardsResponse<any>> => {
     try {
+      const aclResponse = await this.enforceWorkspaceAcl(
+        context,
+        request,
+        opensearchDashboardsResponse,
+        ['library_write', 'library_read']
+      );
+      if (aclResponse) return aclResponse;
       const requestBody = JSON.stringify(request.body);
       const response: SearchResponse<Detector> = await this.client
         .asScoped(request)
@@ -651,12 +1013,62 @@ export default class AdService {
     }
   };
 
+  searchTasks = async (
+    context: RequestHandlerContext,
+    request: OpenSearchDashboardsRequest,
+    opensearchDashboardsResponse: OpenSearchDashboardsResponseFactory
+  ): Promise<IOpenSearchDashboardsResponse<any>> => {
+    try {
+      const aclResponse = await this.enforceWorkspaceAcl(
+        context,
+        request,
+        opensearchDashboardsResponse,
+        ['library_read']
+      );
+      if (aclResponse) return aclResponse;
+      const { dataSourceId = '' } = request.params as { dataSourceId?: string };
+      const callWithRequest = getClientBasedOnDataSource(
+        context,
+        this.dataSourceEnabled,
+        request,
+        dataSourceId,
+        this.client
+      );
+      const response = await callWithRequest('ad.searchTasks', {
+        body: JSON.stringify(request.body),
+      });
+      return opensearchDashboardsResponse.ok({
+        body: { ok: true, response },
+      });
+    } catch (err) {
+      console.log('Anomaly detector - Unable to search tasks', err);
+      if (isIndexNotFoundError(err)) {
+        return opensearchDashboardsResponse.ok({
+          body: {
+            ok: true,
+            response: { hits: { total: { value: 0 }, hits: [] } },
+          },
+        });
+      }
+      return opensearchDashboardsResponse.ok({
+        body: { ok: false, error: getErrorMessage(err) },
+      });
+    }
+  };
+
   searchResults = async (
     context: RequestHandlerContext,
     request: OpenSearchDashboardsRequest,
     opensearchDashboardsResponse: OpenSearchDashboardsResponseFactory
   ): Promise<IOpenSearchDashboardsResponse<any>> => {
     try {
+      const aclResponse = await this.enforceWorkspaceAcl(
+        context,
+        request,
+        opensearchDashboardsResponse,
+        ['library_write', 'library_read']
+      );
+      if (aclResponse) return aclResponse;
       var { resultIndex, onlyQueryCustomResultIndex } = request.params as {
         resultIndex: string;
         onlyQueryCustomResultIndex: boolean;
@@ -684,7 +1096,19 @@ export default class AdService {
         this.client
       );
 
-      const response = !resultIndex
+      // On OpenSearch Serverless the AD backend plugin does not run, so the
+      // plugin-level `_plugins/_anomaly_detection/detectors/results/_search`
+      // endpoint is unavailable. Fall back to the core `_search` API against
+      // the custom result index. Serverless detectors always have a custom
+      // result index (enforced in the UI); the `opensearch-ad-plugin-result-*`
+      // wildcard is a defensive fallback.
+      const serverless = await isServerlessDataSource(context, dataSourceId);
+      const response = serverless
+        ? await callWithRequest('search', {
+            index: resultIndex || `${CUSTOM_AD_RESULT_INDEX_PREFIX}*`,
+            body: request.body,
+          })
+        : !resultIndex
         ? await callWithRequest('ad.searchResults', {
             body: requestBody,
           })
@@ -720,6 +1144,13 @@ export default class AdService {
     opensearchDashboardsResponse: OpenSearchDashboardsResponseFactory
   ): Promise<IOpenSearchDashboardsResponse<any>> => {
     try {
+      const aclResponse = await this.enforceWorkspaceAcl(
+        context,
+        request,
+        opensearchDashboardsResponse,
+        ['library_write', 'library_read']
+      );
+      if (aclResponse) return aclResponse;
       const {
         from = 0,
         size = 20,
@@ -813,20 +1244,27 @@ export default class AdService {
         onlyQueryCustomResultIndex: 'false',
       } as {};
 
-      const aggregationResult = await callWithRequest(
-        'ad.searchResultsFromCustomResultIndex',
-        {
-          ...requestParams,
-          body: getResultAggregationQuery(allDetectorIds, {
-            from,
-            size,
-            sortField,
-            sortDirection,
-            search,
-            indices,
-          }),
-        }
-      );
+      // On serverless the AD plugin endpoint is unavailable; call core
+      // `_search` against the `opensearch-ad-plugin-result-*` wildcard to
+      // aggregate across all custom result indices.
+      const serverless = await isServerlessDataSource(context, dataSourceId);
+      const aggregationBody = getResultAggregationQuery(allDetectorIds, {
+        from,
+        size,
+        sortField,
+        sortDirection,
+        search,
+        indices,
+      });
+      const aggregationResult = serverless
+        ? await callWithRequest('search', {
+            index: CUSTOM_AD_RESULT_INDEX_PREFIX + '*',
+            body: aggregationBody,
+          })
+        : await callWithRequest('ad.searchResultsFromCustomResultIndex', {
+            ...requestParams,
+            body: aggregationBody,
+          });
       const aggsDetectors = get(
         aggregationResult,
         'aggregations.unique_detectors.buckets',
@@ -986,6 +1424,13 @@ export default class AdService {
     const searchTerm = isHistorical ? { task_id: id } : { detector_id: id };
 
     try {
+      const aclResponse = await this.enforceWorkspaceAcl(
+        context,
+        request,
+        opensearchDashboardsResponse,
+        ['library_write', 'library_read']
+      );
+      if (aclResponse) return aclResponse;
       const {
         from = 0,
         size = 20,
@@ -1112,7 +1557,15 @@ export default class AdService {
         this.client
       );
 
-      const response = !resultIndex
+      // See note in searchResults(): core `_search` on serverless because
+      // the AD plugin results endpoint is not available.
+      const serverless = await isServerlessDataSource(context, dataSourceId);
+      const response = serverless
+        ? await callWithRequest('search', {
+            index: resultIndex || `${CUSTOM_AD_RESULT_INDEX_PREFIX}*`,
+            body: requestBody,
+          })
+        : !resultIndex
         ? await callWithRequest('ad.searchResults', {
             body: requestBody,
           })
@@ -1204,6 +1657,13 @@ export default class AdService {
     opensearchDashboardsResponse: OpenSearchDashboardsResponseFactory
   ): Promise<IOpenSearchDashboardsResponse<any>> => {
     try {
+      const aclResponse = await this.enforceWorkspaceAcl(
+        context,
+        request,
+        opensearchDashboardsResponse,
+        ['library_write', 'library_read']
+      );
+      if (aclResponse) return aclResponse;
       let { detectorId, isHistorical } = request.params as {
         detectorId: string;
         isHistorical: any;
@@ -1251,6 +1711,13 @@ export default class AdService {
     opensearchDashboardsResponse: OpenSearchDashboardsResponseFactory
   ): Promise<IOpenSearchDashboardsResponse<any>> => {
     try {
+      const aclResponse = await this.enforceWorkspaceAcl(
+        context,
+        request,
+        opensearchDashboardsResponse,
+        ['library_write', 'library_read']
+      );
+      if (aclResponse) return aclResponse;
       const { detectorName } = request.params as { detectorName: string };
       const { dataSourceId = '' } = request.params as { dataSourceId?: string };
 
@@ -1286,6 +1753,13 @@ export default class AdService {
     opensearchDashboardsResponse: OpenSearchDashboardsResponseFactory
   ): Promise<IOpenSearchDashboardsResponse<any>> => {
     try {
+      const aclResponse = await this.enforceWorkspaceAcl(
+        context,
+        request,
+        opensearchDashboardsResponse,
+        ['library_write', 'library_read']
+      );
+      if (aclResponse) return aclResponse;
       const { dataSourceId = '' } = request.params as { dataSourceId?: string };
 
       const callWithRequest = getClientBasedOnDataSource(

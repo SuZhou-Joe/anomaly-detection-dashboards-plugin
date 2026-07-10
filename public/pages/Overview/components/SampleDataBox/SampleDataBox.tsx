@@ -13,13 +13,14 @@ import React from 'react';
 import { get } from 'lodash';
 import ContentPanel from '../../../../components/ContentPanel/ContentPanel';
 import {
-  EuiButton,
+  EuiSmallButton,
   EuiFlexGroup,
   EuiFlexItem,
   EuiTitle,
   EuiLink,
   EuiCard,
   EuiHorizontalRule,
+  EuiText,
 } from '@elastic/eui';
 import { PLUGIN_NAME } from '../../../../utils/constants';
 import { useLocation } from 'react-router-dom';
@@ -76,15 +77,17 @@ export const SampleDataBox = (props: SampleDataBoxProps) => {
         <EuiFlexGroup direction="column" gutterSize="l">
           <EuiHorizontalRule size="full" margin="s"></EuiHorizontalRule>
           <EuiFlexItem grow={false} style={{ height: '70px' }}>
-            <p
-              style={{
-                textAlign: 'left',
-                lineHeight: 1.4,
-                maxHeight: 4.2,
-              }}
-            >
-              {props.description}
-            </p>
+            <EuiText size="s">
+              <p
+                style={{
+                  textAlign: 'left',
+                  lineHeight: 1.4,
+                  maxHeight: 4.2,
+                }}
+              >
+                {props.description}
+              </p>
+            </EuiText>
           </EuiFlexItem>
           <EuiFlexGroup
             style={{
@@ -96,7 +99,7 @@ export const SampleDataBox = (props: SampleDataBoxProps) => {
             alignItems="center"
           >
             <EuiFlexItem grow={false}>
-              <EuiButton
+              <EuiSmallButton
                 style={{ width: '300px' }}
                 data-test-subj={get(
                   props,
@@ -114,16 +117,18 @@ export const SampleDataBox = (props: SampleDataBoxProps) => {
                   : props.isDataLoaded
                   ? 'Detector created'
                   : props.loadDataButtonDescription}
-              </EuiButton>
+              </EuiSmallButton>
             </EuiFlexItem>
             <EuiFlexItem grow={false}>
               {props.isDataLoaded ? (
-                <EuiLink
-                  data-test-subj="viewSampleDetectorLink"
-                  href={`${PLUGIN_NAME}#/detectors/${props.detectorId}/results?dataSourceId=${dataSourceId}`}
-                >
-                  View detector and sample data
-                </EuiLink>
+                <EuiText size="s">
+                  <EuiLink
+                    data-test-subj="viewSampleDetectorLink"
+                    href={`${PLUGIN_NAME}#/detectors/${props.detectorId}/results?dataSourceId=${dataSourceId}`}
+                  >
+                    View detector and sample data
+                  </EuiLink>
+                </EuiText>
               ) : null}
             </EuiFlexItem>
           </EuiFlexGroup>

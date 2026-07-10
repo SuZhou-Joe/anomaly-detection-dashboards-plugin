@@ -21,9 +21,40 @@ export const AD_NODE_API = Object.freeze({
   BULK: `${BASE_NODE_API_PATH}/bulk`,
   DELETE_INDEX: `${BASE_NODE_API_PATH}/delete_index`,
   CREATE_SAMPLE_DATA: `${BASE_NODE_API_PATH}/create_sample_data`,
+  GET_CLUSTERS_INFO: `${BASE_NODE_API_PATH}/_remote/info`,
+  GET_INDICES_AND_ALIASES: `${BASE_NODE_API_PATH}/_indices_and_aliases`,
+  INSIGHTS_START: `${BASE_NODE_API_PATH}/insights/_start`,
+  INSIGHTS_STOP: `${BASE_NODE_API_PATH}/insights/_stop`,
+  INSIGHTS_STATUS: `${BASE_NODE_API_PATH}/insights/_status`,
+  INSIGHTS_RESULTS: `${BASE_NODE_API_PATH}/insights/_results`,
 });
 export const ALERTING_NODE_API = Object.freeze({
   _SEARCH: `${BASE_NODE_API_PATH}/monitors/_search`,
   ALERTS: `${BASE_NODE_API_PATH}/monitors/alerts`,
   MONITORS: `${BASE_NODE_API_PATH}/monitors`,
 });
+
+export const ML_COMMONS_NODE_API = Object.freeze({
+  AGENT_EXECUTE: `/api/ml/agents`,
+  TASK_STATUS: `/api/ml/tasks`,
+  PREDICT: `/api/ml/models`,
+});
+
+export const FORECAST_BASE_NODE_API_PATH = '/api/forecasting';
+
+export const FORECAST_NODE_API = Object.freeze({
+  _SEARCH: `${FORECAST_BASE_NODE_API_PATH}/_search`,
+  _INDICES: `${FORECAST_BASE_NODE_API_PATH}/_indices`,
+  _ALIASES: `${FORECAST_BASE_NODE_API_PATH}/_aliases`,
+  _MAPPINGS: `${FORECAST_BASE_NODE_API_PATH}/_mappings`,
+  FORECASTER: `${FORECAST_BASE_NODE_API_PATH}/forecasters`,
+  CREATE_INDEX: `${FORECAST_BASE_NODE_API_PATH}/create_index`,
+  BULK: `${FORECAST_BASE_NODE_API_PATH}/bulk`,
+  DELETE_INDEX: `${FORECAST_BASE_NODE_API_PATH}/delete_index`,
+  CREATE_SAMPLE_DATA: `${FORECAST_BASE_NODE_API_PATH}/create_sample_data`,
+  GET_CLUSTERS_INFO: `${FORECAST_BASE_NODE_API_PATH}/_remote/info`,
+  GET_INDICES_AND_ALIASES: `${FORECAST_BASE_NODE_API_PATH}/_indices_and_aliases`,
+});
+
+// Feature Flags
+export const DAILY_INSIGHTS_ENABLED = 'anomalyDetection:dailyInsightsEnabled';

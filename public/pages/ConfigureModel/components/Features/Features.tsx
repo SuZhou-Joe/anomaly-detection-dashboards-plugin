@@ -15,7 +15,7 @@ import {
   EuiText,
   EuiFlexItem,
   EuiFlexGroup,
-  EuiButton,
+  EuiSmallButton,
   EuiLink,
   EuiIcon,
 } from '@elastic/eui';
@@ -26,7 +26,7 @@ import React, { Fragment, useEffect } from 'react';
 import ContentPanel from '../../../../components/ContentPanel/ContentPanel';
 import { Detector } from '../../../../models/interfaces';
 import { initialFeatureValue } from '../../utils/helpers';
-import { MAX_FEATURE_NUM, BASE_DOCS_LINK } from '../../../../utils/constants';
+import { MAX_FEATURE_NUM, AD_DOCS_LINK } from '../../../../utils/constants';
 import { FeatureAccordion } from '../FeatureAccordion';
 
 interface FeaturesProps {
@@ -54,7 +54,7 @@ export function Features(props: FeaturesProps) {
         >
           A feature is the field in your index that you use to check for
           anomalies. You can add up to 5 features.{' '}
-          <EuiLink href={`${BASE_DOCS_LINK}/ad`} target="_blank">
+          <EuiLink href={`${AD_DOCS_LINK}`} target="_blank">
             Learn more
           </EuiLink>
         </EuiText>
@@ -65,24 +65,20 @@ export function Features(props: FeaturesProps) {
           {({ push, remove, form: { values } }: FieldArrayRenderProps) => {
             return (
               <Fragment>
-                {get(props.detector, 'indices.0', '').includes(':') ? (
-                  <div>
-                    <EuiCallOut
-                      title="This detector is using a remote cluster index, so you need to manually input the field."
-                      color="warning"
-                      iconType="alert"
-                    />
-                    <EuiSpacer size="m" />
-                  </div>
-                ) : null}
                 {values.featureList.map((feature: any, index: number) => (
                   <FeatureAccordion
                     onDelete={() => {
                       remove(index);
+                      // delete any leftover suppressionRules as well
+                      const updatedSuppressionRules = props.formikProps.values.suppressionRules.filter(
+                        (_, i) => i !== index
+                      );
+                      props.formikProps.setFieldValue('suppressionRules', updatedSuppressionRules);
                     }}
                     index={index}
                     feature={feature}
                     handleChange={props.formikProps.handleChange}
+                    rules={props}
                   />
                 ))}
                 <EuiFlexGroup
@@ -90,7 +86,7 @@ export function Features(props: FeaturesProps) {
                   style={{ padding: '12px 0px' }}
                 >
                   <EuiFlexItem grow={false}>
-                    <EuiButton
+                    <EuiSmallButton
                       data-test-subj="addFeature"
                       isDisabled={values.featureList.length >= MAX_FEATURE_NUM}
                       onClick={() => {
@@ -98,7 +94,7 @@ export function Features(props: FeaturesProps) {
                       }}
                     >
                       Add another feature
-                    </EuiButton>
+                    </EuiSmallButton>
                     <EuiText className="content-panel-subTitle">
                       <p>
                         You can add up to{' '}

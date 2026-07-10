@@ -20,8 +20,8 @@ import {
   EuiModalBody,
   EuiSpacer,
   EuiText,
-  EuiButtonEmpty,
-  EuiButton,
+  EuiSmallButtonEmpty,
+  EuiSmallButton,
   ButtonColor,
 } from '@elastic/eui';
 
@@ -42,7 +42,11 @@ export const ConfirmModal = (props: ConfirmModalProps) => {
   return (
     <EuiModal onClose={props.onClose}>
       <EuiModalHeader>
-        <EuiModalHeaderTitle>{props.title}&nbsp;</EuiModalHeaderTitle>
+        <EuiModalHeaderTitle>
+          <EuiText size="s">
+            <h2>{props.title}&nbsp;</h2>
+          </EuiText>
+        </EuiModalHeaderTitle>
       </EuiModalHeader>
       <EuiModalBody>
         <EuiFlexGroup direction="column">
@@ -51,7 +55,7 @@ export const ConfirmModal = (props: ConfirmModalProps) => {
           ) : null}
           <EuiFlexItem grow={false}>
             {typeof props.description === 'string' ? (
-              <EuiText>
+              <EuiText size="s">
                 <p>{props.description}</p>
               </EuiText>
             ) : (
@@ -63,11 +67,11 @@ export const ConfirmModal = (props: ConfirmModalProps) => {
       </EuiModalBody>
 
       <EuiModalFooter>
-        <EuiButtonEmpty data-test-subj="cancelButton" onClick={props.onCancel}>
+        <EuiSmallButtonEmpty data-test-subj="cancelButton" onClick={props.onCancel}>
           Cancel
-        </EuiButtonEmpty>
+        </EuiSmallButtonEmpty>
 
-        <EuiButton
+        <EuiSmallButton
           data-test-subj="confirmButton"
           color={props.confirmButtonColor}
           fill
@@ -76,7 +80,7 @@ export const ConfirmModal = (props: ConfirmModalProps) => {
           isLoading={!!props.confirmButtonIsLoading}
         >
           {props.confirmButtonText}
-        </EuiButton>
+        </EuiSmallButton>
       </EuiModalFooter>
     </EuiModal>
   );

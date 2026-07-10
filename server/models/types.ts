@@ -9,17 +9,35 @@
  * GitHub history for details.
  */
 
-import { SORT_DIRECTION, DETECTOR_STATE } from '../utils/constants';
+import { SORT_DIRECTION, DETECTOR_STATE, FORECASTER_STATE } from '../utils/constants';
 
 export type CatIndex = {
   index: string;
   health: string;
+  localCluster?: boolean; 
 };
 
+export type ClusterInfo = {
+  name: string;
+  localCluster: boolean;
+}
+
 export type IndexAlias = {
-  index: string;
+  index: string[] | string;
   alias: string;
+  localCluster?: boolean
 };
+
+export type IndexOption = {
+  label: string, 
+  health: string,
+  localCluster?: boolean
+}
+
+export type AliasOption = {
+  label: string,
+  localCluster?: string
+}
 
 export type GetAliasesResponse = {
   aliases: IndexAlias[];
@@ -89,6 +107,10 @@ export type GetDetectorsQueryParams = {
   indices?: string;
   sortDirection: SORT_DIRECTION;
   sortField: string;
+  dataSourceId?: string;
+};
+
+export type GetForecastersQueryParams = {
   dataSourceId?: string;
 };
 
@@ -162,4 +184,41 @@ export type DateRangeFilter = {
 export type DetectionDateRange = {
   startTime: number;
   endTime: number;
+};
+
+export type ForecastResult = {
+  startTime: number;
+  endTime: number;
+  plotTime: number;
+  forecastValue: number[];
+  forecastLowerBound: number[];
+  forecastUpperBound: number[];
+  forecastStartTime: number[];
+  forecastEndTime: number[];
+  entity?: Entity[];
+  // inherited from AD, key is the feature id, value is the feature data
+  // features is a map of feature id to feature data
+  features?: { [key: string]: FeatureResult };
+};
+
+export type Forecaster = {
+  id?: string;
+  name: string;
+  description: string;
+  indices: string[];
+  filterQuery?: { [key: string]: any };
+  featureAttributes?: FeatureAttributes[];
+  windowDelay?: { period: Schedule };
+  forecastInterval?: { period: Schedule };
+  uiMetadata?: { [key: string]: any };
+  lastUpdateTime: number;
+  enabled: boolean;
+  enabledTime?: number;
+  disabledTime?: number;
+  curState?: FORECASTER_STATE;
+  categoryField?: string[];
+  taskId?: string;
+  taskState?: FORECASTER_STATE;
+  taskProgress?: number;
+  taskError?: string;
 };

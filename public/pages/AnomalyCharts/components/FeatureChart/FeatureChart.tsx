@@ -21,7 +21,7 @@ import {
   LineAnnotation,
   AnnotationDomainType,
 } from '@elastic/charts';
-import { EuiText, EuiLink, EuiButton, EuiIcon } from '@elastic/eui';
+import { EuiText, EuiLink, EuiSmallButton, EuiIcon } from '@elastic/eui';
 import React, { useState, Fragment } from 'react';
 import ContentPanel from '../../../../components/ContentPanel/ContentPanel';
 import { useDelayedLoader } from '../../../../hooks/useDelayedLoader';
@@ -63,6 +63,7 @@ interface FeatureChartProps {
   edit?: boolean;
   onEdit?(): void;
   detectorInterval: Schedule;
+  detectorFrequency: Schedule;
   showFeatureMissingDataPointAnnotation?: boolean;
   detectorEnabledTime?: number;
   rawFeatureData: FeatureAggregationData[][];
@@ -166,7 +167,7 @@ export const FeatureChart = (props: FeatureChartProps) => {
       subTitle={featureDescription()}
       actions={
         props.edit ? (
-          <EuiButton onClick={props.onEdit}>Edit feature</EuiButton>
+          <EuiSmallButton onClick={props.onEdit}>Edit feature</EuiSmallButton>
         ) : null
       }
     >
@@ -237,7 +238,8 @@ export const FeatureChart = (props: FeatureChartProps) => {
                     ),
                     props.dateRange,
                     // date range is selected by customer in UX so window delay time is not considered
-                    false
+                    false,
+                    props.detectorFrequency.interval
                   )}
                   marker={<EuiIcon type="alert" />}
                   style={{

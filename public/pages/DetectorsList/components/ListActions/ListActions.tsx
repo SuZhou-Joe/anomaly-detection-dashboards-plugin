@@ -11,7 +11,7 @@
 
 import React, { useState } from 'react';
 import {
-  EuiButton,
+  EuiSmallButton,
   EuiContextMenuItem,
   EuiContextMenuPanel,
   EuiFlexGroup,
@@ -36,7 +36,7 @@ export const ListActions = (props: ListActionsProps) => {
         <EuiPopover
           id="actionsPopover"
           button={
-            <EuiButton
+            <EuiSmallButton
               data-test-subj="listActionsButton"
               disabled={props.isActionsDisabled}
               iconType="arrowDown"
@@ -44,7 +44,7 @@ export const ListActions = (props: ListActionsProps) => {
               onClick={() => setIsOpen(!isOpen)}
             >
               Actions
-            </EuiButton>
+            </EuiSmallButton>
           }
           panelPaddingSize="none"
           anchorPosition="downLeft"
@@ -57,6 +57,7 @@ export const ListActions = (props: ListActionsProps) => {
               data-test-subj="startDetectors"
               disabled={props.isStartDisabled}
               onClick={props.onStartDetectors}
+              size="s"
             >
               Start real-time detectors
             </EuiContextMenuItem>
@@ -66,6 +67,7 @@ export const ListActions = (props: ListActionsProps) => {
               data-test-subj="stopDetectors"
               disabled={props.isStopDisabled}
               onClick={props.onStopDetectors}
+              size="s"
             >
               Stop real-time detectors
             </EuiContextMenuItem>
@@ -75,6 +77,7 @@ export const ListActions = (props: ListActionsProps) => {
               data-test-subj="deleteDetectors"
               onClick={props.onDeleteDetectors}
               style={{ color: '#FF6666' }}
+              size="s"
             >
               Delete detectors
             </EuiContextMenuItem>

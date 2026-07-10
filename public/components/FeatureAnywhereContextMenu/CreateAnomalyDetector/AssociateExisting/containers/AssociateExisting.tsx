@@ -9,7 +9,7 @@ import {
   EuiSpacer,
   EuiIcon,
   EuiText,
-  EuiComboBox,
+  EuiCompressedComboBox,
   EuiLoadingSpinner,
   EuiLink,
   EuiFlexGroup,
@@ -44,11 +44,12 @@ import {
 } from '../../../../../../../../src/plugins/vis_augmenter/public';
 import { stateToColorMap } from '../../../../../pages/utils/constants';
 import {
-  BASE_DOCS_LINK,
+  AD_DOCS_LINK,
   PLUGIN_NAME,
 } from '../../../../../../public/utils/constants';
 import { renderTime } from '../../../../../../public/pages/DetectorsList/utils/tableUtils';
 import { getAllDetectorsQueryParamsWithDataSourceId } from '../../../../../pages/utils/helpers';
+import { isNoLivingConnectionsError } from '../../../../../utils/utils';
 
 interface AssociateExistingProps {
   embeddableVisId: string;
@@ -78,7 +79,7 @@ export function AssociateExisting(
       const indexPattern = await getSavedObjectsClient().get('index-pattern', associateExistingProps.indexPatternId);
       const refs = indexPattern.references as References[];
       const foundDataSourceId = refs.find(ref => ref.type === 'data-source')?.id;
-      setDataSourceId(foundDataSourceId); 
+      setDataSourceId(foundDataSourceId);
     } catch (error) {
       console.error("Error fetching index pattern:", error);
     }
@@ -104,6 +105,9 @@ export function AssociateExisting(
       errorGettingDetectors &&
       !errorGettingDetectors.includes(SINGLE_DETECTOR_NOT_FOUND_MSG)
     ) {
+      if (isNoLivingConnectionsError(errorGettingDetectors)) {
+        return;
+      }
       console.error(errorGettingDetectors);
       core.notifications.toasts.addDanger(
         typeof errorGettingDetectors === 'string' &&
@@ -211,7 +215,7 @@ export function AssociateExisting(
           View existing anomaly detectors across your system and add the
           detector(s) to a dashboard and visualization.{' '}
           <a
-            href={`${BASE_DOCS_LINK}/ad`}
+            href={`${AD_DOCS_LINK}`}
             target="_blank"
             style={{ display: 'inline-block' }}
           >
@@ -228,7 +232,7 @@ export function AssociateExisting(
         Eligible detectors don't include high-cardinality detectors.
       </EuiText>
       {existingDetectorsAvailableToAssociate ? (
-        <EuiComboBox
+        <EuiCompressedComboBox
           isLoading={isLoading}
           id="associate-existing__select"
           options={options}

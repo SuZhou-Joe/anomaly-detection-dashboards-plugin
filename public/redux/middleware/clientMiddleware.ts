@@ -45,6 +45,7 @@ export default function clientMiddleware<State>(client: HttpSetup) {
             throw get(result, 'error', '');
           }
         } catch (error) {
+          console.log('Processed error in middleware:', error);
           next({ ...rest, error, type: `${type}_FAILURE` });
           throw error;
         }

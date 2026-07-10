@@ -14,12 +14,14 @@ exports[`<DetectorJobs /> spec configuring detector jobs renders the component 1
       <div
         class="euiPageHeaderSection"
       >
-        <h1
-          class="euiTitle euiTitle--large"
+        <div
+          class="euiText euiText--small"
           data-test-subj="detectorJobsTitle"
         >
-          Set up detector jobs 
-        </h1>
+          <h1>
+            Set up detector jobs 
+          </h1>
+        </div>
       </div>
     </header>
     <div
@@ -54,7 +56,7 @@ exports[`<DetectorJobs /> spec configuring detector jobs renders the component 1
                  
                 <a
                   class="euiLink euiLink--primary"
-                  href="https://opensearch.org/docs/monitoring-plugins/ad"
+                  href="https://opensearch.org/docs/latest/observing-your-data/ad/index/"
                   rel="noopener noreferrer"
                   target="_blank"
                 >
@@ -107,7 +109,7 @@ exports[`<DetectorJobs /> spec configuring detector jobs renders the component 1
             class="euiFlexItem"
           >
             <div
-              class="euiCheckbox"
+              class="euiCheckbox euiCheckbox--compressed"
             >
               <input
                 checked=""
@@ -164,7 +166,7 @@ exports[`<DetectorJobs /> spec configuring detector jobs renders the component 1
                  
                 <a
                   class="euiLink euiLink--primary"
-                  href="https://opensearch.org/docs/monitoring-plugins/ad"
+                  href="https://opensearch.org/docs/latest/observing-your-data/ad/index/"
                   rel="noopener noreferrer"
                   target="_blank"
                 >
@@ -220,7 +222,7 @@ exports[`<DetectorJobs /> spec configuring detector jobs renders the component 1
               class="euiFlexItem"
             >
               <div
-                class="euiCheckbox"
+                class="euiCheckbox euiCheckbox--compressed"
               >
                 <input
                   class="euiCheckbox__input"

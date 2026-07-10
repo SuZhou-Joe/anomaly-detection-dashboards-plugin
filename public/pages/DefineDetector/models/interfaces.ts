@@ -20,10 +20,9 @@ export interface DetectorDefinitionFormikValues {
   filters: UIFilter[];
   filterQuery: string;
   timeField: string;
-  interval: number;
-  windowDelay: number;
   resultIndexMinAge?: number | string;
   resultIndexMinSize?: number | string;
   resultIndexTtl?:number | string;
   flattenCustomResultIndex?: boolean;
+  clusters?: any[];
 }

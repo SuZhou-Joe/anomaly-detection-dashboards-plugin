@@ -10,11 +10,11 @@
  */
 
 import {
-  EuiComboBox,
+  EuiCompressedComboBox,
   EuiFlexGroup,
   EuiFlexItem,
-  EuiFormRow,
-  EuiSelect,
+  EuiCompressedFormRow,
+  EuiCompressedSelect,
 } from '@elastic/eui';
 import { Field, FieldProps } from 'formik';
 import React, { useState } from 'react';
@@ -32,6 +32,7 @@ import { getIndexFields, getOperators, isNullOperator } from '../utils/helpers';
 import FilterValue from './FilterValue';
 import { DetectorDefinitionFormikValues } from '../../../models/interfaces';
 import { EMPTY_UI_FILTER } from '../../../utils/constants';
+import _ from 'lodash';
 
 interface SimpleFilterProps {
   filter: UIFilter;
@@ -40,8 +41,20 @@ interface SimpleFilterProps {
   replace(index: number, value: any): void;
 }
 
+// This sorting is needed because we utilize two different ways to get index fields,
+// through get mapping call and through field_caps API for remote indices
+const sortByLabel = (indexFields) => {
+  //sort the `options` array inside each object by the `label` field
+  indexFields.forEach(item => {
+      item.options = _.sortBy(item.options, 'label');
+  });
+  //sort the outer array by the `label` field
+  return _.sortBy(indexFields, 'label');
+};
+
 export const SimpleFilter = (props: SimpleFilterProps) => {
-  const indexFields = getIndexFields(useSelector(getAllFields));
+  let indexFields = getIndexFields(useSelector(getAllFields));
+  indexFields = sortByLabel(indexFields)
   const [searchedIndexFields, setSearchedIndexFields] = useState<
     ({
       label: DATA_TYPES;
@@ -96,12 +109,12 @@ export const SimpleFilter = (props: SimpleFilterProps) => {
               validateOnChange={true}
             >
               {({ field, form }: FieldProps) => (
-                <EuiFormRow
+                <EuiCompressedFormRow
                   label="Field"
                   isInvalid={isInvalid(field.name, form)}
                   error={getError(field.name, form)}
                 >
-                  <EuiComboBox
+                  <EuiCompressedComboBox
                     id={`filters.${props.index}.fieldInfo`}
                     singleSelection={{ asPlainText: true }}
                     placeholder="Choose a field"
@@ -144,19 +157,19 @@ export const SimpleFilter = (props: SimpleFilterProps) => {
                     onSearchChange={handleSearchFieldChange}
                     isInvalid={isInvalid(field.name, form)}
                   />
-                </EuiFormRow>
+                </EuiCompressedFormRow>
               )}
             </Field>
           </EuiFlexItem>
           <EuiFlexItem>
             <Field name={`filters.${props.index}.operator`}>
               {({ field, form }: FieldProps) => (
-                <EuiFormRow
+                <EuiCompressedFormRow
                   label="Operator"
                   isInvalid={isInvalid(field.name, form)}
                   error={getError(field.name, form)}
                 >
-                  <EuiSelect
+                  <EuiCompressedSelect
                     id={`filters.${props.index}.operator`}
                     placeholder="Choose an operator"
                     {...field}
@@ -192,7 +205,7 @@ export const SimpleFilter = (props: SimpleFilterProps) => {
                       );
                     }}
                   />
-                </EuiFormRow>
+                </EuiCompressedFormRow>
               )}
             </Field>
           </EuiFlexItem>

@@ -16,13 +16,11 @@ import {
   EuiFlexItem,
   EuiFlexGroup,
   EuiPage,
-  EuiButton,
-  EuiTitle,
-  EuiButtonEmpty,
+  EuiSmallButton,
+  EuiSmallButtonEmpty,
   EuiSpacer,
   EuiText,
   EuiLink,
-  EuiIcon,
 } from '@elastic/eui';
 import { FormikProps, Formik } from 'formik';
 import { get, isEmpty } from 'lodash';
@@ -32,7 +30,11 @@ import { RouteComponentProps, useLocation } from 'react-router-dom';
 import { AppState } from '../../../redux/reducers';
 import { getMappings } from '../../../redux/reducers/opensearch';
 import { useFetchDetectorInfo } from '../../CreateDetectorSteps/hooks/useFetchDetectorInfo';
-import { BREADCRUMBS, BASE_DOCS_LINK, MDS_BREADCRUMBS } from '../../../utils/constants';
+import {
+  BREADCRUMBS,
+  AD_DOCS_LINK,
+  MDS_BREADCRUMBS,
+} from '../../../utils/constants';
 import { useHideSideNavBar } from '../../main/hooks/useHideSideNavBar';
 import { updateDetector } from '../../../redux/reducers/ad';
 import {
@@ -40,8 +42,9 @@ import {
   focusOnFirstWrongFeature,
   getCategoryFields,
   focusOnCategoryField,
-  getShingleSizeFromObject,
   modelConfigurationToFormik,
+  focusOnImputationOption,
+  focusOnSuppressionRules,
 } from '../utils/helpers';
 import { formikToDetector } from '../../ReviewAndCreate/utils/helpers';
 import { formikToModelConfiguration } from '../utils/helpers';
@@ -54,14 +57,17 @@ import { CoreServicesContext } from '../../../components/CoreServices/CoreServic
 import { Detector } from '../../../models/interfaces';
 import { prettifyErrorMessage } from '../../../../server/utils/helpers';
 import { DetectorDefinitionFormikValues } from '../../DefineDetector/models/interfaces';
-import { ModelConfigurationFormikValues } from '../models/interfaces';
+import {
+  ModelConfigurationFormikValues,
+  FeaturesFormikValues,
+  RuleFormikValues
+} from '../models/interfaces';
 import { CreateDetectorFormikValues } from '../../CreateDetectorSteps/models/interfaces';
 import { DETECTOR_STATE } from '../../../../server/utils/constants';
 import { getErrorMessage } from '../../../utils/utils';
 import {
   constructHrefWithDataSourceId,
   getDataSourceFromURL,
-  isDataSourceCompatible,
 } from '../../../pages/utils/helpers';
 import {
   getDataSourceManagementPlugin,
@@ -70,6 +76,10 @@ import {
   getSavedObjectsClient,
 } from '../../../services';
 import { DataSourceViewConfig } from '../../../../../../src/plugins/data_source_management/public';
+import { SparseDataOptionValue } from '../utils/constants';
+import { SuggestParametersDialog } from '../components/SuggestParametersDialog/SuggestParametersDialog';
+import { Settings } from '../components/Settings';
+import ContentPanel from '../../../components/ContentPanel/ContentPanel';
 
 interface ConfigureModelRouterProps {
   detectorId?: string;
@@ -118,7 +128,7 @@ export function ConfigureModel(props: ConfigureModelProps) {
       setIsHCDetector(true);
     }
     if (detector?.indices) {
-      dispatch(getMappings(detector.indices[0], dataSourceId));
+      dispatch(getMappings(detector.indices, dataSourceId));
     }
   }, [detector]);
 
@@ -130,7 +140,11 @@ export function ConfigureModel(props: ConfigureModelProps) {
           MDS_BREADCRUMBS.DETECTORS(dataSourceId),
           {
             text: detector && detector.name ? detector.name : '',
-            href: constructHrefWithDataSourceId(`#/detectors/${detectorId}`, dataSourceId, false)
+            href: constructHrefWithDataSourceId(
+              `#/detectors/${detectorId}`,
+              dataSourceId,
+              false
+            ),
           },
           MDS_BREADCRUMBS.EDIT_MODEL_CONFIGURATION,
         ]);
@@ -164,16 +178,124 @@ export function ConfigureModel(props: ConfigureModelProps) {
 
   useEffect(() => {
     if (hasError) {
-      if(dataSourceEnabled) {
+      if (dataSourceEnabled) {
         props.history.push(
           constructHrefWithDataSourceId('/detectors', dataSourceId, false)
         );
-      }
-      else {
+      } else {
         props.history.push('/detectors');
       }
     }
   }, [hasError]);
+
+  const validateImputationOption = (
+    formikValues: ModelConfigurationFormikValues,
+    errors: any
+  ) => {
+    const imputationOption = get(formikValues, 'imputationOption', null);
+
+    // Initialize an array to hold individual error messages
+    const customValueErrors: string[] = [];
+
+    // Validate imputationOption when method is CUSTOM_VALUE
+    if (imputationOption && imputationOption.imputationMethod === SparseDataOptionValue.CUSTOM_VALUE) {
+      const enabledFeatures = formikValues.featureList.filter(
+        (feature: FeaturesFormikValues) => feature.featureEnabled
+      );
+
+      // Validate that the number of custom values matches the number of enabled features
+      if ((imputationOption.custom_value || []).length !== enabledFeatures.length) {
+        customValueErrors.push(
+          `The number of custom values (${(imputationOption.custom_value || []).length}) does not match the number of enabled features (${enabledFeatures.length}).`
+        );
+      }
+
+      // Validate that each enabled feature has a corresponding custom value
+      const missingFeatures = enabledFeatures
+        .map((feature: FeaturesFormikValues) => feature.featureName)
+        .filter(
+          (name: string | undefined) =>
+            !imputationOption.custom_value?.some((cv) => cv.featureName === name)
+        );
+
+      if (missingFeatures.length > 0) {
+        customValueErrors.push(
+          `The following enabled features are missing in custom values: ${missingFeatures.join(', ')}.`
+        );
+      }
+
+      // If there are any custom value errors, join them into a single string with proper formatting
+      if (customValueErrors.length > 0) {
+        errors.custom_value = customValueErrors.join(' ');
+      }
+    }
+  };
+
+  const flattenErrorMessages = (errors): string => {
+    if (Array.isArray(errors)) {
+      return errors
+        .flatMap((innerArray) =>
+          Array.isArray(innerArray)
+            ? innerArray.map((errorObj) =>
+                Object.entries(errorObj || {})
+                  .map(([key, value]) => `${key}: ${value}`)
+                  .join(", ")
+              )
+            : []
+        )
+        .join(", ");
+    }
+    return typeof errors === "string" ? errors : "";
+  };
+  
+
+  const validateRules = (
+    formikValues: ModelConfigurationFormikValues,
+    errors: any
+  ) => {
+    const suppressionRules = formikValues.suppressionRules || [];
+
+  // Initialize an array to hold individual error messages
+  const featureNameErrors: string[] = [];
+
+  // List of enabled features
+  const enabledFeatures = formikValues.featureList
+    .filter((feature: FeaturesFormikValues) => feature.featureEnabled)
+    .map((feature: FeaturesFormikValues) => feature.featureName);
+
+  // Validate that each featureName in suppressionRules exists in enabledFeatures
+  suppressionRules.forEach((featureRules: RuleFormikValues[], featureIndex: number) => {
+    if (featureRules != null && featureRules.length > 0) {
+      const featureName = featureRules[0]?.featureName;
+      if (featureName === "" || featureName === undefined) {
+        featureNameErrors.push(
+          "Please make sure all features have unique names"
+        );
+        return;
+      }
+      
+      if (!enabledFeatures.includes(featureName)) {
+        featureNameErrors.push(
+          `Feature "${featureName}" in suppression rules does not exist or is not enabled in the feature list.`
+        );
+      }
+
+      // Additional validation for each rule if needed
+      featureRules.forEach((rule: RuleFormikValues, ruleIndex: number) => {
+        if (rule.absoluteThreshold === null && rule.relativeThreshold === null) {
+          featureNameErrors.push(
+            `Rule ${ruleIndex + 1} for feature "${featureName}" must have either an absolute or relative threshold.`
+          );
+        }
+      });
+    }
+  });
+
+      // If there are any custom value errors, join them into a single string with proper formatting
+      if (featureNameErrors.length > 0) {
+        errors.suppressionRules = featureNameErrors.join(' ');
+      }
+  };
 
   const handleFormValidation = async (
     formikProps: FormikProps<ModelConfigurationFormikValues>
@@ -187,7 +309,18 @@ export function ConfigureModel(props: ConfigureModelProps) {
       formikProps.setFieldTouched('featureList');
       formikProps.setFieldTouched('categoryField', isHCDetector);
       formikProps.setFieldTouched('shingleSize');
+      formikProps.setFieldTouched('imputationOption');
+      formikProps.setFieldTouched('suppressionRules');
+      formikProps.setFieldTouched('interval');
+      formikProps.setFieldTouched('windowDelay');
+      formikProps.setFieldTouched('frequency');
+      formikProps.setFieldTouched('history');
+
       formikProps.validateForm().then((errors) => {
+        // Call the extracted validation method
+        validateImputationOption(formikProps.values, errors);
+        validateRules(formikProps.values, errors);
+
         if (isEmpty(errors)) {
           if (props.isEdit) {
             // TODO: possibly add logic to also start RT and/or historical from here. Need to think
@@ -206,11 +339,32 @@ export function ConfigureModel(props: ConfigureModelProps) {
             props.setStep(3);
           }
         } else {
+          const customValueError = get(errors, 'custom_value')
+          if (customValueError) {
+            core.notifications.toasts.addDanger(
+              customValueError
+            );
+            focusOnImputationOption();
+            return;
+          }
+
+          const ruleValueError = get(errors, 'suppressionRules')
+          if (ruleValueError) {
+            const errorString = flattenErrorMessages(ruleValueError);
+            core.notifications.toasts.addDanger(
+              errorString
+            );
+            focusOnSuppressionRules();
+            return;
+          }
+
           // TODO: can add focus to all components or possibly customize error message too
           if (get(errors, 'featureList')) {
             focusOnFirstWrongFeature(errors, formikProps.setFieldTouched);
           } else if (get(errors, 'categoryField')) {
             focusOnCategoryField();
+          } else {
+            console.log(`unexpected error ${JSON.stringify(errors)}`);
           }
 
           core.notifications.toasts.addDanger(
@@ -271,11 +425,12 @@ export function ConfigureModel(props: ConfigureModelProps) {
           fullWidth: false,
           savedObjects: getSavedObjectsClient(),
           notifications: getNotifications(),
-          dataSourceFilter: isDataSourceCompatible,
         }}
       />
     );
   }
+
+  const [showSuggestDialog, setShowSuggestDialog] = useState(false);
 
   return (
     <Formik
@@ -300,8 +455,8 @@ export function ConfigureModel(props: ConfigureModelProps) {
             <EuiPageBody>
               <EuiPageHeader>
                 <EuiPageHeaderSection>
-                  <EuiTitle
-                    size="l"
+                  <EuiText
+                    size="s"
                     data-test-subj="configureOrEditModelConfigurationTitle"
                   >
                     <h1>
@@ -309,17 +464,17 @@ export function ConfigureModel(props: ConfigureModelProps) {
                         ? 'Edit model configuration'
                         : 'Configure model'}{' '}
                     </h1>
-                  </EuiTitle>
+                  </EuiText>
                   <Fragment>
                     <EuiSpacer size="s" />
-                    <EuiText>
+                    <EuiText size="s">
                       Set the index fields that you want to find anomalies for
                       by defining the model features. You can also set other
                       model parameters such as category field and shingle size
                       for more granular views. After you set the model features
                       and other optional parameters, you can preview your
                       anomalies from a sample feature output.{' '}
-                      <EuiLink href={`${BASE_DOCS_LINK}/ad`} target="_blank">
+                      <EuiLink href={`${AD_DOCS_LINK}`} target="_blank">
                         Learn more
                       </EuiLink>
                     </EuiText>
@@ -338,6 +493,28 @@ export function ConfigureModel(props: ConfigureModelProps) {
                 formikProps={formikProps}
               />
               <EuiSpacer />
+              <ContentPanel title="Operation settings" titleSize="s">
+                <EuiSmallButton
+                  data-test-subj="suggestParametersButton"
+                  onClick={() => setShowSuggestDialog(true)}
+                >
+                  Suggest parameters
+                </EuiSmallButton>
+
+                {/* Conditionally render the SuggestParametersDialog */}
+                {showSuggestDialog && (
+                  <SuggestParametersDialog
+                    onClose={() => setShowSuggestDialog(false)}
+                    dataSourceId={dataSourceId}
+                    detectorDefinitionValues={props.detectorDefinitionValues!}
+                    formikProps={formikProps}
+                  />
+                )}
+
+                <EuiSpacer />
+                <Settings />
+              </ContentPanel>
+              <EuiSpacer />
               <AdvancedSettings />
               {!isEmpty(detectorToCreate) ? <EuiSpacer /> : null}
               {!isEmpty(detectorToCreate) ? (
@@ -348,6 +525,12 @@ export function ConfigureModel(props: ConfigureModelProps) {
                   categoryFields={formikProps.values.categoryField}
                   errors={formikProps.errors}
                   setFieldTouched={formikProps.setFieldTouched}
+                  imputationOption={formikProps.values.imputationOption}
+                  suppressionRules={formikProps.values.suppressionRules}
+                  interval={formikProps.values.interval}
+                  windowDelay={formikProps.values.windowDelay}
+                  frequency={formikProps.values.frequency}
+                  history={formikProps.values.history}
                 />
               ) : null}
             </EuiPageBody>
@@ -360,7 +543,7 @@ export function ConfigureModel(props: ConfigureModelProps) {
             style={{ marginRight: '12px' }}
           >
             <EuiFlexItem grow={false}>
-              <EuiButtonEmpty
+              <EuiSmallButtonEmpty
                 onClick={() => {
                   if (props.isEdit) {
                     props.history.push(
@@ -382,11 +565,11 @@ export function ConfigureModel(props: ConfigureModelProps) {
                 }}
               >
                 Cancel
-              </EuiButtonEmpty>
+              </EuiSmallButtonEmpty>
             </EuiFlexItem>
             {props.isEdit ? null : (
               <EuiFlexItem grow={false}>
-                <EuiButton
+                <EuiSmallButton
                   iconSide="left"
                   iconType="arrowLeft"
                   fill={false}
@@ -402,12 +585,12 @@ export function ConfigureModel(props: ConfigureModelProps) {
                   }}
                 >
                   Previous
-                </EuiButton>
+                </EuiSmallButton>
               </EuiFlexItem>
             )}
             <EuiFlexItem grow={false}>
               {props.isEdit ? (
-                <EuiButton
+                <EuiSmallButton
                   type="submit"
                   fill={true}
                   data-test-subj="updateDetectorButton"
@@ -417,9 +600,9 @@ export function ConfigureModel(props: ConfigureModelProps) {
                   }}
                 >
                   Save changes
-                </EuiButton>
+                </EuiSmallButton>
               ) : (
-                <EuiButton
+                <EuiSmallButton
                   type="submit"
                   iconSide="right"
                   iconType="arrowRight"
@@ -432,7 +615,7 @@ export function ConfigureModel(props: ConfigureModelProps) {
                   }}
                 >
                   Next
-                </EuiButton>
+                </EuiSmallButton>
               )}
             </EuiFlexItem>
           </EuiFlexGroup>

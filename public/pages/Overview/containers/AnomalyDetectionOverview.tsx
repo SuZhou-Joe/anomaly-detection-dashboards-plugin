@@ -12,12 +12,11 @@
 import {
   EuiSpacer,
   EuiPageHeader,
-  EuiTitle,
   EuiText,
   EuiFlexItem,
   EuiFlexGroup,
   EuiLink,
-  EuiButton,
+  EuiSmallButton,
   EuiLoadingSpinner,
   EuiFlexGrid,
 } from '@elastic/eui';
@@ -27,8 +26,9 @@ import {
   APP_PATH,
   BREADCRUMBS,
   PLUGIN_NAME,
-  BASE_DOCS_LINK,
+  AD_DOCS_LINK,
   MDS_BREADCRUMBS,
+  USE_NEW_HOME_PAGE,
 } from '../../../utils/constants';
 import { SAMPLE_TYPE } from '../../../../server/utils/constants';
 import { GET_SAMPLE_INDICES_QUERY } from '../../utils/constants';
@@ -62,11 +62,15 @@ import {
   getDataSourceEnabled,
   getNotifications,
   getSavedObjectsClient,
+  getNavigationUI,
+  getApplication,
+  getUISettings,
 } from '../../../../public/services';
 import { RouteComponentProps } from 'react-router-dom';
 import queryString from 'querystring';
 import { getDataSourceFromURL, getSampleDetectorsQueryParamsWithDataSouceId, isDataSourceCompatible } from '../../../../public/pages/utils/helpers';
 import { MDSStates } from '../../../models/interfaces';
+import { TopNavControlButtonData, TopNavControlLinkData } from '../../../../../../src/plugins/navigation/public';
 
 interface AnomalyDetectionOverviewProps extends RouteComponentProps {
   setActionMenu: (menuMount: MountPoint | undefined) => void;
@@ -104,17 +108,32 @@ export function AnomalyDetectionOverview(props: AnomalyDetectionOverviewProps) {
   const queryParams = getDataSourceFromURL(props.location);
   const [MDSOverviewState, setMDSOverviewState] = useState<MDSStates>({
     queryParams,
-    selectedDataSourceId: queryParams.dataSourceId === undefined 
-      ? undefined 
+    selectedDataSourceId: queryParams.dataSourceId === undefined
+      ? undefined
       : queryParams.dataSourceId,
   });
 
+  const useUpdatedUX = getUISettings().get(USE_NEW_HOME_PAGE);
+  const { HeaderControl } = getNavigationUI();
+  const { setAppRightControls, setAppDescriptionControls } = getApplication();
+
   // Set breadcrumbs on page initialization
   useEffect(() => {
-    if (dataSourceEnabled) {
-      core.chrome.setBreadcrumbs([MDS_BREADCRUMBS.ANOMALY_DETECTOR(MDSOverviewState.selectedDataSourceId)]);
+    if (useUpdatedUX) {
+      if (dataSourceEnabled) {
+        core.chrome.setBreadcrumbs([
+          MDS_BREADCRUMBS.ANOMALY_DETECTOR(MDSOverviewState.selectedDataSourceId),
+          BREADCRUMBS.TITLE_GET_STARTED
+        ]);
+      } else {
+        core.chrome.setBreadcrumbs([BREADCRUMBS.ANOMALY_DETECTOR, BREADCRUMBS.TITLE_GET_STARTED]);
+      }
     } else {
-      core.chrome.setBreadcrumbs([BREADCRUMBS.ANOMALY_DETECTOR]);
+      if (dataSourceEnabled) {
+        core.chrome.setBreadcrumbs([MDS_BREADCRUMBS.ANOMALY_DETECTOR(MDSOverviewState.selectedDataSourceId)]);
+      } else {
+        core.chrome.setBreadcrumbs([BREADCRUMBS.ANOMALY_DETECTOR]);
+      }
     }
   }, []);
 
@@ -130,29 +149,29 @@ export function AnomalyDetectionOverview(props: AnomalyDetectionOverviewProps) {
         ...location,
         search: queryString.stringify(updatedParams),
       });
-    } 
+    }
     fetchData();
   }, [MDSOverviewState]);
 
   // fetch smaple detectors and sample indices
   const fetchData = async () => {
-    await dispatch(
-      getDetectorList(
-        getSampleDetectorsQueryParamsWithDataSouceId(
+      await dispatch(
+        getDetectorList(
+          getSampleDetectorsQueryParamsWithDataSouceId(
+            MDSOverviewState.selectedDataSourceId
+          )
+        )
+      ).catch((error: any) => {
+        console.error('Error getting sample detectors: ', error);
+      });
+      await dispatch(
+        getIndices(
+          GET_SAMPLE_INDICES_QUERY,
           MDSOverviewState.selectedDataSourceId
         )
-      )
-    ).catch((error: any) => {
-      console.error('Error getting sample detectors: ', error);
-    });
-    await dispatch(
-      getIndices(
-        GET_SAMPLE_INDICES_QUERY,
-        MDSOverviewState.selectedDataSourceId
-      )
-    ).catch((error: any) => {
-      console.error('Error getting sample indices: ', error);
-    });
+      ).catch((error: any) => {
+        console.error('Error getting sample indices: ', error);
+      });
   };
 
   // Create and populate sample index, create and start sample detector
@@ -239,6 +258,12 @@ export function AnomalyDetectionOverview(props: AnomalyDetectionOverviewProps) {
     }
   };
 
+  const createDetectorUrl =
+    `${PLUGIN_NAME}#` +
+    (dataSourceEnabled
+      ? `${APP_PATH.CREATE_DETECTOR}?dataSourceId=${MDSOverviewState.selectedDataSourceId}`
+      : `${APP_PATH.CREATE_DETECTOR}`);
+
   let renderDataSourceComponent = null;
   if (dataSourceEnabled) {
     const DataSourceMenu =
@@ -250,7 +275,7 @@ export function AnomalyDetectionOverview(props: AnomalyDetectionOverviewProps) {
           componentType={'DataSourceSelectable'}
           componentConfig={{
             fullWidth: false,
-            activeOption: props.landingDataSourceId === undefined 
+            activeOption: props.landingDataSourceId === undefined
               || MDSOverviewState.selectedDataSourceId === undefined
                 ? undefined
                 : [{ id: MDSOverviewState.selectedDataSourceId }],
@@ -265,11 +290,70 @@ export function AnomalyDetectionOverview(props: AnomalyDetectionOverviewProps) {
     }, [getSavedObjectsClient, getNotifications, props.setActionMenu]);
   }
 
-  const createDetectorUrl =
-    `${PLUGIN_NAME}#` +
-    (dataSourceEnabled
-      ? `${APP_PATH.CREATE_DETECTOR}?dataSourceId=${MDSOverviewState.selectedDataSourceId}`
-      : `${APP_PATH.CREATE_DETECTOR}`);
+  const descriptionData = [
+    {
+      description: 'The anomaly detection plugin automatically detects anomalies in your data in near real-time using the Random Cut Forest (RCF) algorithm.',
+      links: {
+        label: 'Learn more',
+        target: '_blank',
+        flush: 'both',
+        href: `${AD_DOCS_LINK}`,
+        controlType: 'link',
+      } as TopNavControlLinkData,
+    },
+  ];
+  let renderPageHeader = () => {
+    return useUpdatedUX ? (
+      <>
+        <HeaderControl
+          setMountPoint={setAppDescriptionControls}
+          controls={descriptionData}
+        />
+        <HeaderControl
+          setMountPoint={setAppRightControls}
+          controls={[
+            {
+              id: 'Create detector',
+              label: 'Create detector',
+              iconType: 'plus',
+              fill: true,
+              href: createDetectorUrl,
+              testId: 'add_detector',
+              controlType: 'button',
+            } as TopNavControlButtonData,
+          ]}
+        />
+      </>
+    ) : (
+      <>
+      <EuiPageHeader>
+        <EuiFlexGroup justifyContent="spaceBetween">
+          <EuiFlexItem grow={false}>
+            <EuiText size="s" data-test-subj="overviewTitle">
+              <h1>Get started</h1>
+            </EuiText>
+          </EuiFlexItem>
+          <EuiFlexItem grow={false}>
+            <EuiSmallButton
+              fill
+              href={createDetectorUrl}
+              data-test-subj="add_detector"
+            >
+              Create detector
+            </EuiSmallButton>
+          </EuiFlexItem>
+        </EuiFlexGroup>
+      </EuiPageHeader>
+      <EuiText size="s">
+        The anomaly detection plugin automatically detects anomalies in your
+        data in near real-time using the Random Cut Forest (RCF) algorithm.{' '}
+        <EuiLink href={`${AD_DOCS_LINK}`} target="_blank">
+          Learn more
+        </EuiLink>
+      </EuiText>
+      </>
+    )
+  };
 
   return isLoadingSampleDetectors && isLoadingSampleIndices ? (
     <div>
@@ -277,32 +361,9 @@ export function AnomalyDetectionOverview(props: AnomalyDetectionOverviewProps) {
     </div>
   ) : (
     <Fragment>
-      <EuiPageHeader>
-        {dataSourceEnabled && renderDataSourceComponent}
-        <EuiFlexGroup justifyContent="spaceBetween">
-          <EuiFlexItem grow={false}>
-            <EuiTitle size="l" data-test-subj="overviewTitle">
-              <h1>Get started</h1>
-            </EuiTitle>
-          </EuiFlexItem>
-          <EuiFlexItem grow={false}>
-            <EuiButton
-              fill
-              href={createDetectorUrl}
-              data-test-subj="add_detector"
-            >
-              Create detector
-            </EuiButton>
-          </EuiFlexItem>
-        </EuiFlexGroup>
-      </EuiPageHeader>
-      <EuiText>
-        The anomaly detection plugin automatically detects anomalies in your
-        data in near real-time using the Random Cut Forest (RCF) algorithm.{' '}
-        <EuiLink href={`${BASE_DOCS_LINK}/ad`} target="_blank">
-          Learn more
-        </EuiLink>
-      </EuiText>
+      {dataSourceEnabled && renderDataSourceComponent}
+      {renderPageHeader()}
+
       <EuiSpacer size="xl" />
       <ContentPanel title="How it works">
         <EuiFlexGroup>
@@ -331,7 +392,7 @@ export function AnomalyDetectionOverview(props: AnomalyDetectionOverviewProps) {
       <ContentPanel
         title="Start with a sample detector to learn about anomaly detection"
         subTitle={
-          <EuiText style={{ marginTop: '5px' }}>
+          <EuiText size="s" style={{ marginTop: '5px' }}>
             New to anomaly detection? Get a better understanding of how it works
             by creating a detector with one of the sample datasets.
           </EuiText>

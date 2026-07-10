@@ -17,7 +17,7 @@ import React, {
   useState,
 } from 'react';
 import { RouteComponentProps, useLocation } from 'react-router';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { Dispatch } from 'redux';
 import { FormikProps, Formik } from 'formik';
 import { get, isEmpty } from 'lodash';
@@ -25,13 +25,13 @@ import {
   EuiSpacer,
   EuiFlexGroup,
   EuiFlexItem,
-  EuiButton,
-  EuiButtonEmpty,
+  EuiSmallButton,
+  EuiSmallButtonEmpty,
   EuiPage,
   EuiPageBody,
   EuiPageHeader,
   EuiPageHeaderSection,
-  EuiTitle,
+  EuiText,
 } from '@elastic/eui';
 import { updateDetector, matchDetector } from '../../../redux/reducers/ad';
 import { useHideSideNavBar } from '../../main/hooks/useHideSideNavBar';
@@ -45,7 +45,6 @@ import { NameAndDescription } from '../components/NameAndDescription';
 import { DataSource } from '../components/Datasource/DataSource';
 import { CustomResultIndex } from '../components/CustomResultIndex';
 import { Timestamp } from '../components/Timestamp';
-import { Settings } from '../components/Settings';
 import {
   detectorDefinitionToFormik,
   formikToDetectorDefinition,
@@ -62,6 +61,7 @@ import {
   getNotifications,
   getSavedObjectsClient,
 } from '../../../services';
+import { isServerlessDataSource } from '../../../utils/dataSourceUtils';
 import { DataSourceSelectableConfig, DataSourceViewConfig } from '../../../../../../src/plugins/data_source_management/public';
 import {
   constructHrefWithDataSourceId,
@@ -69,6 +69,7 @@ import {
   isDataSourceCompatible,
 } from '../../../pages/utils/helpers';
 import queryString from 'querystring';
+import { AppState } from '../../../redux/reducers';
 
 interface DefineDetectorRouterProps {
   detectorId?: string;
@@ -89,7 +90,7 @@ export const DefineDetector = (props: DefineDetectorProps) => {
   const MDSQueryParams = getDataSourceFromURL(location);
   const dataSourceId = MDSQueryParams.dataSourceId;
   const dataSourceEnabled = getDataSourceEnabled().enabled;
-
+  const opensearchState = useSelector((state: AppState) => state.opensearch);
   const core = React.useContext(CoreServicesContext) as CoreStart;
   const dispatch = useDispatch<Dispatch<APIAction>>();
   useHideSideNavBar(true, false);
@@ -101,6 +102,22 @@ export const DefineDetector = (props: DefineDetectorProps) => {
     queryParams: MDSQueryParams,
     selectedDataSourceId: dataSourceId === undefined? undefined : dataSourceId,
   });
+
+  // Tracks whether the currently selected data source is an OpenSearch
+  // Serverless (AOSS) collection. Resolved asynchronously from the data-source
+  // saved object. Serverless disables several AD features (historical
+  // analysis, default result index, flattened result index) so child
+  // components must branch on this value.
+  const [isServerless, setIsServerless] = useState<boolean>(false);
+  useEffect(() => {
+    let cancelled = false;
+    isServerlessDataSource(MDSCreateState.selectedDataSourceId).then((result) => {
+      if (!cancelled) setIsServerless(result);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [MDSCreateState.selectedDataSourceId]);
 
   // To handle backward compatibility, we need to pass some fields via
   // props to the subcomponents so they can render correctly
@@ -224,8 +241,6 @@ export const DefineDetector = (props: DefineDetectorProps) => {
       formikProps.setFieldTouched('resultIndex');
       formikProps.setFieldTouched('filters');
       formikProps.setFieldTouched('timeField');
-      formikProps.setFieldTouched('interval');
-      formikProps.setFieldTouched('windowDelay');
       formikProps.setFieldTouched('resultIndexMinAge');
       formikProps.setFieldTouched('resultIndexMinSize');
       formikProps.setFieldTouched('resultIndexTtl');
@@ -310,7 +325,6 @@ export const DefineDetector = (props: DefineDetectorProps) => {
           fullWidth: false,
           savedObjects: getSavedObjectsClient(),
           notifications: getNotifications(),
-          dataSourceFilter: isDataSourceCompatible,
         }}
       />
     );
@@ -346,7 +360,7 @@ export const DefineDetector = (props: DefineDetectorProps) => {
       initialValues={
         props.initialValues
           ? props.initialValues
-          : detectorDefinitionToFormik(detector)
+          : detectorDefinitionToFormik(detector, opensearchState.clusters)
       }
       enableReinitialize={true}
       onSubmit={() => {}}
@@ -363,13 +377,13 @@ export const DefineDetector = (props: DefineDetectorProps) => {
             <EuiPageBody>
               <EuiPageHeader>
                 <EuiPageHeaderSection>
-                  <EuiTitle size="l" data-test-subj="defineOrEditDetectorTitle">
+                  <EuiText size="s" data-test-subj="defineOrEditDetectorTitle">
                     <h1>
                       {props.isEdit
                         ? 'Edit detector settings'
                         : 'Define detector'}{' '}
                     </h1>
-                  </EuiTitle>
+                  </EuiText>
                 </EuiPageHeaderSection>
               </EuiPageHeader>
               <Fragment>
@@ -380,7 +394,7 @@ export const DefineDetector = (props: DefineDetectorProps) => {
                 <DataSource
                   formikProps={formikProps}
                   origIndex={
-                    props.isEdit ? get(detector, 'indices.0', '') : null
+                    props.isEdit ? get(detector, 'indices', [] as { label: string; }[]) : null
                   }
                   isEdit={props.isEdit}
                   setModelConfigValues={props.setModelConfigValues}
@@ -391,12 +405,11 @@ export const DefineDetector = (props: DefineDetectorProps) => {
                 <EuiSpacer />
                 <Timestamp formikProps={formikProps} />
                 <EuiSpacer />
-                <Settings />
-                <EuiSpacer />
                 <CustomResultIndex
                   isEdit={props.isEdit}
                   resultIndex={get(formikProps, 'values.resultIndex')}
                   formikProps={formikProps}
+                  isServerless={isServerless}
                 />
               </Fragment>
             </EuiPageBody>
@@ -410,7 +423,7 @@ export const DefineDetector = (props: DefineDetectorProps) => {
             style={{ marginRight: '12px' }}
           >
             <EuiFlexItem grow={false}>
-              <EuiButtonEmpty
+              <EuiSmallButtonEmpty
                 onClick={() => {
                   if (props.isEdit) {
                     props.history.push(
@@ -432,11 +445,11 @@ export const DefineDetector = (props: DefineDetectorProps) => {
                 }}
               >
                 Cancel
-              </EuiButtonEmpty>
+              </EuiSmallButtonEmpty>
             </EuiFlexItem>
             <EuiFlexItem grow={false}>
               {props.isEdit ? (
-                <EuiButton
+                <EuiSmallButton
                   type="submit"
                   fill={true}
                   data-test-subj="updateDetectorButton"
@@ -446,9 +459,9 @@ export const DefineDetector = (props: DefineDetectorProps) => {
                   }}
                 >
                   Save changes
-                </EuiButton>
+                </EuiSmallButton>
               ) : (
-                <EuiButton
+                <EuiSmallButton
                   type="submit"
                   iconSide="right"
                   iconType="arrowRight"
@@ -461,7 +474,7 @@ export const DefineDetector = (props: DefineDetectorProps) => {
                   }}
                 >
                   Next
-                </EuiButton>
+                </EuiSmallButton>
               )}
             </EuiFlexItem>
           </EuiFlexGroup>

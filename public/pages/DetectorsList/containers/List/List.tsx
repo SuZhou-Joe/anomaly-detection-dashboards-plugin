@@ -12,7 +12,7 @@
 import {
   //@ts-ignore
   EuiBasicTable,
-  EuiButton,
+  EuiSmallButton,
   EuiComboBoxOptionProps,
   EuiPage,
   EuiPageBody,
@@ -39,10 +39,11 @@ import {
   deleteDetector,
 } from '../../../../redux/reducers/ad';
 import {
-  getIndices,
+  getClustersInfo,
+  getIndicesAndAliases,
   getPrioritizedIndices,
 } from '../../../../redux/reducers/opensearch';
-import { APP_PATH, MDS_BREADCRUMBS, PLUGIN_NAME } from '../../../../utils/constants';
+import { APP_PATH, MDS_BREADCRUMBS, PLUGIN_NAME, USE_NEW_HOME_PAGE } from '../../../../utils/constants';
 import { DETECTOR_STATE } from '../../../../../server/utils/constants';
 import {
   constructHrefWithDataSourceId,
@@ -72,7 +73,7 @@ import {
 } from '../../../utils/helpers';
 import { getColumns } from '../../utils/tableUtils';
 import { DETECTOR_ACTION } from '../../utils/constants';
-import { getTitleWithCount, Listener } from '../../../../utils/utils';
+import { getTitleWithCount, Listener, isNoLivingConnectionsError } from '../../../../utils/utils';
 import { ListActions } from '../../components/ListActions/ListActions';
 import { searchMonitors } from '../../../../redux/reducers/alerting';
 import { Monitor } from '../../../../models/interfaces';
@@ -91,7 +92,11 @@ import {
   getDataSourceEnabled,
   getNotifications,
   getSavedObjectsClient,
+  getUISettings,
+  getNavigationUI,
+  getApplication,
 } from '../../../../services';
+import { TopNavControlButtonData } from '../../../../../../../src/plugins/navigation/public';
 
 export interface ListRouterParams {
   from: string;
@@ -170,19 +175,34 @@ export const DetectorList = (props: ListProps) => {
     isStopDisabled: false,
   });
 
+  const [localClusterName, setLocalClusterName] = useState("");
+
   // Getting all initial monitors
   useEffect(() => {
     const getInitialMonitors = async () => {
       dispatch(searchMonitors(state.selectedDataSourceId));
     };
+    const getInitialClusters = async () => {
+      await dispatch(getClustersInfo(state.selectedDataSourceId));
+    }
     getInitialMonitors();
+    getInitialClusters();
   }, []);
+
+  useEffect(() => {
+    if (opensearchState.clusters && opensearchState.clusters.length > 0) {
+      setLocalClusterName(opensearchState.clusters.find(cluster => cluster.localCluster)?.name || "local")
+    }
+  }, [opensearchState.clusters]);
 
   useEffect(() => {
     if (
       errorGettingDetectors &&
       !errorGettingDetectors.includes(SINGLE_DETECTOR_NOT_FOUND_MSG)
     ) {
+      if (isNoLivingConnectionsError(errorGettingDetectors)) {
+        return;
+      }
       console.error(errorGettingDetectors);
       core.notifications.toasts.addDanger(
         typeof errorGettingDetectors === 'string' &&
@@ -197,7 +217,7 @@ export const DetectorList = (props: ListProps) => {
   // Updating displayed indices (initializing to first 20 for now)
   const visibleIndices = get(opensearchState, 'indices', []) as CatIndex[];
   const visibleAliases = get(opensearchState, 'aliases', []) as IndexAlias[];
-  const indexOptions = getVisibleOptions(visibleIndices, visibleAliases);
+  const indexOptions = getVisibleOptions(visibleIndices, visibleAliases, localClusterName);
 
   const queryParams = getURLQueryParams(props.location);
   const [state, setState] = useState<ListState>({
@@ -207,8 +227,8 @@ export const DetectorList = (props: ListProps) => {
     selectedIndices: queryParams.indices
       ? queryParams.indices.split(',')
       : ALL_INDICES,
-    selectedDataSourceId: queryParams.dataSourceId === undefined 
-      ? undefined 
+    selectedDataSourceId: queryParams.dataSourceId === undefined
+      ? undefined
       : queryParams.dataSourceId,
   });
 
@@ -231,7 +251,7 @@ export const DetectorList = (props: ListProps) => {
   const [indexQuery, setIndexQuery] = useState('');
   useEffect(() => {
     const getInitialIndices = async () => {
-      await dispatch(getIndices(indexQuery, state.selectedDataSourceId));
+      await dispatch(getIndicesAndAliases(indexQuery, state.selectedDataSourceId, "*"))
     };
     getInitialIndices();
   }, [state.selectedDataSourceId]);
@@ -246,7 +266,7 @@ export const DetectorList = (props: ListProps) => {
       indices: state.selectedIndices.join(','),
       sortDirection: state.queryParams.sortDirection,
       sortField: state.queryParams.sortField,
-    } as GetDetectorsQueryParams; 
+    } as GetDetectorsQueryParams;
 
     if (dataSourceEnabled) {
       updatedParams = {
@@ -261,8 +281,12 @@ export const DetectorList = (props: ListProps) => {
     });
 
     setIsLoadingFinalDetectors(true);
-
-    getUpdatedDetectors();
+    
+    dispatch(
+      getDetectorList(
+        getAllDetectorsQueryParamsWithDataSourceId(state.selectedDataSourceId)
+      )
+    );
   }, [
     state.page,
     state.queryParams,
@@ -699,7 +723,7 @@ export const DetectorList = (props: ListProps) => {
           componentType={'DataSourceSelectable'}
           componentConfig={{
             fullWidth: false,
-            activeOption: state.selectedDataSourceId !== undefined 
+            activeOption: state.selectedDataSourceId !== undefined
               ? [{ id: state.selectedDataSourceId }]
               : undefined,
             savedObjects: getSavedObjectsClient(),
@@ -717,10 +741,36 @@ export const DetectorList = (props: ListProps) => {
 
   const createDetectorUrl =`${PLUGIN_NAME}#` + constructHrefWithDataSourceId(APP_PATH.CREATE_DETECTOR, state.selectedDataSourceId, false);
 
+  const useUpdatedUX = getUISettings().get(USE_NEW_HOME_PAGE);
+  const { HeaderControl } = getNavigationUI();
+  const { setAppRightControls } = getApplication();
+
+  const renderCreateButton = () => {
+    return useUpdatedUX ? (
+      <HeaderControl
+          setMountPoint={setAppRightControls}
+          controls={[
+            {
+              id: 'Create detector',
+              label: 'Create detector',
+              iconType: 'plus',
+              fill: true,
+              href: createDetectorUrl,
+              testId: 'createDetectorButton',
+              controlType: 'button',
+            } as TopNavControlButtonData,
+          ]}
+        />
+    ) : (
+      null
+    )
+  };
+
   return (
     <EuiPage>
       <EuiPageBody>
         {dataSourceEnabled && renderDataSourceComponent}
+        {renderCreateButton()}
         <ContentPanel
           title={
             isLoading
@@ -737,13 +787,13 @@ export const DetectorList = (props: ListProps) => {
               isStartDisabled={listActionsState.isStartDisabled}
               isStopDisabled={listActionsState.isStopDisabled}
             />,
-            <EuiButton
+            !useUpdatedUX && (<EuiSmallButton
               data-test-subj="createDetectorButton"
               fill
               href={createDetectorUrl}
             >
               Create detector
-            </EuiButton>,
+            </EuiSmallButton>),
           ]}
         >
           {confirmModal}

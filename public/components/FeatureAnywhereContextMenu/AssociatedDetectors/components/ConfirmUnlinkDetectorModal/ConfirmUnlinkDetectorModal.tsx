@@ -7,8 +7,8 @@ import React, { useState } from 'react';
 import {
   EuiText,
   EuiOverlayMask,
-  EuiButton,
-  EuiButtonEmpty,
+  EuiSmallButton,
+  EuiSmallButtonEmpty,
   EuiModal,
   EuiModalHeader,
   EuiModalFooter,
@@ -39,10 +39,16 @@ export const ConfirmUnlinkDetectorModal = (
         maxWidth={450}
       >
         <EuiModalHeader>
-          <EuiModalHeaderTitle>{'Remove association?'}</EuiModalHeaderTitle>
+          <EuiModalHeaderTitle>
+            <EuiText size="s">
+              <h2>
+                {'Remove association?'}
+              </h2>
+            </EuiText>
+          </EuiModalHeaderTitle>
         </EuiModalHeader>
         <EuiModalBody>
-          <EuiText>
+          <EuiText size="s">
             Removing association unlinks {props.detector.name} detector from the
             visualization but does not delete it. The detector association can
             be restored.
@@ -51,14 +57,14 @@ export const ConfirmUnlinkDetectorModal = (
         </EuiModalBody>
         <EuiModalFooter>
           {isLoading ? null : (
-            <EuiButtonEmpty
+            <EuiSmallButtonEmpty
               data-test-subj="cancelUnlinkButton"
               onClick={props.onHide}
             >
               Cancel
-            </EuiButtonEmpty>
+            </EuiSmallButtonEmpty>
           )}
-          <EuiButton
+          <EuiSmallButton
             data-test-subj="confirmUnlinkButton"
             color="primary"
             fill
@@ -70,7 +76,7 @@ export const ConfirmUnlinkDetectorModal = (
             }}
           >
             {'Remove association'}
-          </EuiButton>
+          </EuiSmallButton>
         </EuiModalFooter>
       </EuiModal>
     </EuiOverlayMask>

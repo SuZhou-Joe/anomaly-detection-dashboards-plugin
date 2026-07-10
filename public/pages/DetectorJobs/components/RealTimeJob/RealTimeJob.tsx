@@ -14,14 +14,14 @@ import {
   EuiLink,
   EuiIcon,
   EuiFlexItem,
-  EuiCheckbox,
+  EuiCompressedCheckbox,
 } from '@elastic/eui';
 import { Field, FieldProps, FormikProps } from 'formik';
 import { get } from 'lodash';
 import React, { useState } from 'react';
 import ContentPanel from '../../../../components/ContentPanel/ContentPanel';
 import { DetectorJobsFormikValues } from '../../models/interfaces';
-import { BASE_DOCS_LINK } from '../../../../utils/constants';
+import { AD_DOCS_LINK } from '../../../../utils/constants';
 
 interface RealTimeJobProps {
   formikProps: FormikProps<DetectorJobsFormikValues>;
@@ -46,7 +46,7 @@ export function RealTimeJob(props: RealTimeJobProps) {
           needs to start and collect sufficient data to include your latest
           changes. The earlier the detector starts running, the sooner the
           real-time anomalies will be available.{' '}
-          <EuiLink href={`${BASE_DOCS_LINK}/ad`} target="_blank">
+          <EuiLink href={`${AD_DOCS_LINK}`} target="_blank">
             Learn more
           </EuiLink>
         </EuiText>
@@ -55,7 +55,7 @@ export function RealTimeJob(props: RealTimeJobProps) {
       <Field name="realTime" validate={() => {}}>
         {({ field, form }: FieldProps) => (
           <EuiFlexItem>
-            <EuiCheckbox
+            <EuiCompressedCheckbox
               id={'realTimeCheckbox'}
               label="Start real-time detector automatically (recommended)"
               checked={enabled}

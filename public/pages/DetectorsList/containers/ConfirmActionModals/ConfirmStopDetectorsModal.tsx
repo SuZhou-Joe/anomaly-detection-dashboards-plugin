@@ -14,8 +14,8 @@ import {
   EuiText,
   EuiOverlayMask,
   EuiCallOut,
-  EuiButton,
-  EuiButtonEmpty,
+  EuiSmallButton,
+  EuiSmallButtonEmpty,
   EuiModal,
   EuiModalHeader,
   EuiModalFooter,
@@ -57,7 +57,11 @@ export const ConfirmStopDetectorsModal = (
       <EuiModal data-test-subj="stopDetectorsModal" onClose={props.onHide}>
         <EuiModalHeader>
           <EuiModalHeaderTitle>
-            {'Are you sure you want to stop the selected detectors?'}&nbsp;
+            <EuiText size="s">
+              <h2>
+                {'Are you sure you want to stop the selected detectors?'}&nbsp;
+              </h2>
+            </EuiText>
           </EuiModalHeaderTitle>
         </EuiModalHeader>
         <EuiModalBody>
@@ -71,7 +75,7 @@ export const ConfirmStopDetectorsModal = (
               <EuiSpacer size="s" />
             </div>
           ) : null}
-          <EuiText>The following detectors will be stopped.</EuiText>
+          <EuiText size="s">The following detectors will be stopped.</EuiText>
           <EuiSpacer size="s" />
           <div>
             {isLoading ? (
@@ -83,14 +87,14 @@ export const ConfirmStopDetectorsModal = (
         </EuiModalBody>
         <EuiModalFooter>
           {isLoading ? null : (
-            <EuiButtonEmpty
+            <EuiSmallButtonEmpty
               data-test-subj="cancelButton"
               onClick={props.onHide}
             >
               Cancel
-            </EuiButtonEmpty>
+            </EuiSmallButtonEmpty>
           )}
-          <EuiButton
+          <EuiSmallButton
             data-test-subj="confirmButton"
             color="primary"
             fill
@@ -102,7 +106,7 @@ export const ConfirmStopDetectorsModal = (
             }}
           >
             {'Stop detectors'}
-          </EuiButton>
+          </EuiSmallButton>
         </EuiModalFooter>
       </EuiModal>
     </EuiOverlayMask>

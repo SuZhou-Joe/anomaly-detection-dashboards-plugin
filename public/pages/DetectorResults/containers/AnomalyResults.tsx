@@ -16,7 +16,7 @@ import {
   EuiPageBody,
   EuiSpacer,
   EuiCallOut,
-  EuiButton,
+  EuiSmallButton,
   EuiProgress,
   EuiFlexGroup,
   EuiFlexItem,
@@ -78,6 +78,10 @@ interface AnomalyResultsProps extends RouteComponentProps {
   onStopDetector(): void;
   onSwitchToConfiguration(): void;
   onSwitchToHistorical(): void;
+  // When true, the detector targets an OpenSearch Serverless collection;
+  // historical analysis is unsupported in this mode so callers should not
+  // render any switch-to-historical CTA.
+  isServerless?: boolean;
 }
 
 export function AnomalyResults(props: AnomalyResultsProps) {
@@ -209,6 +213,12 @@ export function AnomalyResults(props: AnomalyResultsProps) {
     1
   );
 
+  const detectorFrequencyInMin = get(
+    detector,
+    'frequency.period.interval',
+    1
+  );
+
   const isInitializingNormally =
     isDetectorInitializing &&
     isInitOvertime != undefined &&
@@ -231,9 +241,11 @@ export function AnomalyResults(props: AnomalyResultsProps) {
         windowDelayInterval * toDuration(windowDelayUnit).asMinutes();
     }
 
-    // The query in this function uses data start/end time. So we should consider window delay
+    const minutesToSkip = detectorFrequencyInMin !== detectorIntervalInMin ? detectorFrequencyInMin : detectorIntervalInMin;
+
+    // The query in this function uses data start/end time. So we should consider window delay and frequency
     let adjustedCurrentTime = moment().subtract(
-      windowDelayInMinutes,
+      windowDelayInMinutes + minutesToSkip,
       'minutes'
     );
 
@@ -245,7 +257,7 @@ export function AnomalyResults(props: AnomalyResultsProps) {
           .clone()
           .subtract(
             (FEATURE_DATA_POINTS_WINDOW + FEATURE_DATA_CHECK_WINDOW_OFFSET) *
-              detectorIntervalInMin,
+            detectorIntervalInMin,
             'minutes'
           )
           .valueOf(),
@@ -283,6 +295,7 @@ export function AnomalyResults(props: AnomalyResultsProps) {
         featuresData,
         detectorIntervalInMin,
         featureDataPointsRange,
+        true,
         true
       );
 
@@ -334,7 +347,7 @@ export function AnomalyResults(props: AnomalyResultsProps) {
                 marginBottom: '8px',
               }}
             />
-            <EuiText>
+            <EuiText size="s">
               <p>
                 Attempting to initialize the detector with historical data. This
                 initializing process takes approximately 1 minute if you have
@@ -504,7 +517,7 @@ export function AnomalyResults(props: AnomalyResultsProps) {
                           <EuiSpacer size="l" />
                         </div>
                       ) : null}
-                      <EuiButton
+                      <EuiSmallButton
                         onClick={props.onSwitchToConfiguration}
                         color={
                           featureMissingSeverity ===
@@ -521,15 +534,15 @@ export function AnomalyResults(props: AnomalyResultsProps) {
                         style={{ marginRight: '8px' }}
                       >
                         View detector configuration
-                      </EuiButton>
+                      </EuiSmallButton>
                       {isDetectorUpdated || isDetectorFailed ? (
-                        <EuiButton
+                        <EuiSmallButton
                           color={isDetectorFailed ? 'danger' : 'warning'}
                           onClick={props.onStartDetector}
                           style={{ marginLeft: '8px' }}
                         >
                           Restart detector
-                        </EuiButton>
+                        </EuiSmallButton>
                       ) : null}
                     </EuiCallOut>
                   ) : null}
@@ -558,7 +571,7 @@ export function AnomalyResults(props: AnomalyResultsProps) {
                       </EuiFlexItem>
 
                       <EuiFlexItem grow={false}>
-                        <EuiButton
+                        <EuiSmallButton
                           data-test-subj="stopAndStartDetectorButton"
                           onClick={
                             detector?.enabled
@@ -570,7 +583,7 @@ export function AnomalyResults(props: AnomalyResultsProps) {
                           {detector?.enabled
                             ? 'Stop detector'
                             : 'Start detector'}
-                        </EuiButton>
+                        </EuiSmallButton>
                       </EuiFlexItem>
                     </EuiFlexGroup>
                   ) : null}

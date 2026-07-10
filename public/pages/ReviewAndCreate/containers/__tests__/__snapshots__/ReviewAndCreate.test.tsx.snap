@@ -14,12 +14,14 @@ exports[`<ReviewAndCreate /> spec renders the component, validation loading 1`] 
       <div
         class="euiPageHeaderSection"
       >
-        <h1
-          class="euiTitle euiTitle--large"
+        <div
+          class="euiText euiText--small"
           data-test-subj="reviewAndCreateTitle"
         >
-          Review and create 
-        </h1>
+          <h1>
+            Review and create 
+          </h1>
+        </div>
       </div>
     </header>
     <div
@@ -58,7 +60,7 @@ exports[`<ReviewAndCreate /> spec renders the component, validation loading 1`] 
               class="euiFlexItem"
             >
               <button
-                class="euiButton euiButton--primary"
+                class="euiButton euiButton--primary euiButton--small"
                 data-test-subj="editDetectorSettingsButton"
                 type="button"
               >
@@ -124,7 +126,7 @@ exports[`<ReviewAndCreate /> spec renders the component, validation loading 1`] 
               data-test-subj="detectorNameCell"
             >
               <div
-                class="euiFormRow"
+                class="euiFormRow euiFormRow--compressed"
                 id="random_html_id-row"
                 style="width: 250px;"
               >
@@ -157,7 +159,7 @@ exports[`<ReviewAndCreate /> spec renders the component, validation loading 1`] 
               data-test-subj="indexNameCell"
             >
               <div
-                class="euiFormRow"
+                class="euiFormRow euiFormRow--compressed"
                 id="random_html_id-row"
                 style="width: 250px;"
               >
@@ -180,7 +182,9 @@ exports[`<ReviewAndCreate /> spec renders the component, validation loading 1`] 
                   >
                     <p
                       class="enabled"
-                    />
+                    >
+                      -
+                    </p>
                   </div>
                 </div>
               </div>
@@ -189,7 +193,7 @@ exports[`<ReviewAndCreate /> spec renders the component, validation loading 1`] 
               class="euiFlexItem"
             >
               <div
-                class="euiFormRow"
+                class="euiFormRow euiFormRow--compressed"
                 id="random_html_id-row"
                 style="width: 250px;"
               >
@@ -230,44 +234,10 @@ exports[`<ReviewAndCreate /> spec renders the component, validation loading 1`] 
             </div>
             <div
               class="euiFlexItem"
-            >
-              <div
-                class="euiFormRow"
-                id="random_html_id-row"
-                style="width: 250px;"
-              >
-                <div
-                  class="euiFormRow__labelWrapper"
-                >
-                  <label
-                    class="euiFormLabel euiFormRow__label"
-                    for="random_html_id"
-                  >
-                    Detector interval
-                  </label>
-                </div>
-                <div
-                  class="euiFormRow__fieldWrapper"
-                >
-                  <div
-                    class="euiText euiText--medium"
-                    id="random_html_id"
-                  >
-                    <p
-                      class="enabled"
-                    >
-                      10 Minutes
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div
-              class="euiFlexItem"
               data-test-subj="detectorDescriptionCell"
             >
               <div
-                class="euiFormRow"
+                class="euiFormRow euiFormRow--compressed"
                 id="random_html_id-row"
                 style="width: 250px;"
               >
@@ -300,7 +270,7 @@ exports[`<ReviewAndCreate /> spec renders the component, validation loading 1`] 
               data-test-subj="timestampNameCell"
             >
               <div
-                class="euiFormRow"
+                class="euiFormRow euiFormRow--compressed"
                 id="random_html_id-row"
                 style="width: 250px;"
               >
@@ -332,41 +302,7 @@ exports[`<ReviewAndCreate /> spec renders the component, validation loading 1`] 
               class="euiFlexItem"
             >
               <div
-                class="euiFormRow"
-                id="random_html_id-row"
-                style="width: 250px;"
-              >
-                <div
-                  class="euiFormRow__labelWrapper"
-                >
-                  <label
-                    class="euiFormLabel euiFormRow__label"
-                    for="random_html_id"
-                  >
-                    Window delay
-                  </label>
-                </div>
-                <div
-                  class="euiFormRow__fieldWrapper"
-                >
-                  <div
-                    class="euiText euiText--medium"
-                    id="random_html_id"
-                  >
-                    <p
-                      class="enabled"
-                    >
-                      1 Minutes
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div
-              class="euiFlexItem"
-            >
-              <div
-                class="euiFormRow"
+                class="euiFormRow euiFormRow--compressed"
                 id="random_html_id-row"
                 style="width: 250px;"
               >
@@ -400,7 +336,7 @@ exports[`<ReviewAndCreate /> spec renders the component, validation loading 1`] 
               class="euiFlexItem"
             >
               <div
-                class="euiFormRow"
+                class="euiFormRow euiFormRow--compressed"
                 id="random_html_id-row"
                 style="width: 250px;"
               >
@@ -434,7 +370,7 @@ exports[`<ReviewAndCreate /> spec renders the component, validation loading 1`] 
               class="euiFlexItem"
             >
               <div
-                class="euiFormRow"
+                class="euiFormRow euiFormRow--compressed"
                 id="random_html_id-row"
                 style="width: 250px;"
               >
@@ -468,7 +404,7 @@ exports[`<ReviewAndCreate /> spec renders the component, validation loading 1`] 
               class="euiFlexItem"
             >
               <div
-                class="euiFormRow"
+                class="euiFormRow euiFormRow--compressed"
                 id="random_html_id-row"
                 style="width: 250px;"
               >
@@ -502,7 +438,7 @@ exports[`<ReviewAndCreate /> spec renders the component, validation loading 1`] 
               class="euiFlexItem"
             >
               <div
-                class="euiFormRow"
+                class="euiFormRow euiFormRow--compressed"
                 id="random_html_id-row"
                 style="width: 250px;"
               >
@@ -575,7 +511,7 @@ exports[`<ReviewAndCreate /> spec renders the component, validation loading 1`] 
               class="euiFlexItem"
             >
               <button
-                class="euiButton euiButton--primary"
+                class="euiButton euiButton--primary euiButton--small"
                 type="button"
               >
                 <span
@@ -634,112 +570,423 @@ exports[`<ReviewAndCreate /> spec renders the component, validation loading 1`] 
           </div>
           <div>
             <div
-              class="euiBasicTable header-single-value-euiBasicTable"
+              class="euiPanel euiPanel--paddingMedium euiPanel--borderRadiusMedium euiPanel--plain euiPanel--hasShadow"
+              style="padding: 20px;"
             >
-              <div>
+              <div
+                class="euiFlexGroup euiFlexGroup--gutterLarge euiFlexGroup--alignItemsCenter euiFlexGroup--justifyContentSpaceBetween euiFlexGroup--directionRow euiFlexGroup--responsive"
+                style="padding: 0px;"
+              >
                 <div
-                  class="euiTableHeaderMobile"
+                  class="euiFlexItem"
                 >
+                  <h3
+                    class="euiTitle euiTitle--small"
+                    data-test-subj="contentPanelTitle"
+                  >
+                    Operational setting
+                  </h3>
                   <div
-                    class="euiFlexGroup euiFlexGroup--gutterLarge euiFlexGroup--alignItemsBaseline euiFlexGroup--justifyContentSpaceBetween euiFlexGroup--directionRow"
+                    class="euiFlexGroup euiFlexGroup--gutterLarge euiFlexGroup--directionRow euiFlexGroup--responsive"
                   >
                     <div
-                      class="euiFlexItem euiFlexItem--flexGrowZero"
-                    />
-                    <div
-                      class="euiFlexItem euiFlexItem--flexGrowZero"
+                      class="euiFlexItem content-panel-subTitle"
+                      style="line-height: normal; max-width: 75%;"
                     />
                   </div>
                 </div>
-                <table
-                  class="euiTable euiTable--responsive"
-                  id="random_html_id"
-                  tabindex="-1"
+                <div
+                  class="euiFlexItem euiFlexItem--flexGrowZero"
                 >
-                  <caption
-                    class="euiScreenReaderOnly euiTableCaption"
-                  />
-                  <thead>
-                    <tr>
-                      <th
-                        class="euiTableHeaderCell"
-                        data-test-subj="tableHeaderCell_categoryField_0"
-                        role="columnheader"
-                        scope="col"
-                      >
-                        <span
-                          class="euiTableCellContent"
-                        >
-                          <span
-                            class="euiTableCellContent__text"
-                            title="Category field"
-                          >
-                            Category field
-                          </span>
-                        </span>
-                      </th>
-                      <th
-                        class="euiTableHeaderCell"
-                        data-test-subj="tableHeaderCell_shingleSize_1"
-                        role="columnheader"
-                        scope="col"
-                      >
-                        <span
-                          class="euiTableCellContent"
-                        >
-                          <span
-                            class="euiTableCellContent__text"
-                            title="Shingle size"
-                          >
-                            Shingle size
-                          </span>
-                        </span>
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr
-                      class="euiTableRow"
+                  <div
+                    class="euiFlexGroup euiFlexGroup--gutterMedium euiFlexGroup--alignItemsCenter euiFlexGroup--justifyContentSpaceBetween euiFlexGroup--directionRow euiFlexGroup--responsive"
+                  >
+                    <div
+                      class="euiFlexItem"
+                    />
+                  </div>
+                </div>
+              </div>
+              <div>
+                <hr
+                  class="euiHorizontalRule euiHorizontalRule--full euiHorizontalRule--marginSmall"
+                />
+                <div
+                  style="padding: 10px 0px;"
+                >
+                  <div
+                    class="euiFlexGrid euiFlexGrid--gutterLarge euiFlexGrid--halves euiFlexGrid--responsive"
+                  >
+                    <div
+                      class="euiFlexItem"
                     >
-                      <td
-                        class="euiTableRowCell"
+                      <div
+                        class="euiFormRow euiFormRow--compressed"
+                        id="random_html_id-row"
+                        style="width: 250px;"
                       >
                         <div
-                          class="euiTableRowCell__mobileHeader euiTableRowCell--hideForDesktop"
+                          class="euiFormRow__labelWrapper"
                         >
-                          Category field
+                          <label
+                            class="euiFormLabel euiFormRow__label"
+                            for="random_html_id"
+                          >
+                            Detector interval
+                          </label>
                         </div>
                         <div
-                          class="euiTableCellContent"
+                          class="euiFormRow__fieldWrapper"
                         >
-                          <span
-                            class="euiTableCellContent__text"
+                          <div
+                            class="euiText euiText--medium"
+                            id="random_html_id"
                           >
-                            -
-                          </span>
+                            <p
+                              class="enabled"
+                            >
+                              undefined Minutes
+                            </p>
+                          </div>
                         </div>
-                      </td>
-                      <td
-                        class="euiTableRowCell"
+                      </div>
+                    </div>
+                    <div
+                      class="euiFlexItem"
+                    >
+                      <div
+                        class="euiFormRow euiFormRow--compressed"
+                        id="random_html_id-row"
+                        style="width: 250px;"
                       >
                         <div
-                          class="euiTableRowCell__mobileHeader euiTableRowCell--hideForDesktop"
+                          class="euiFormRow__labelWrapper"
                         >
-                          Shingle size
+                          <label
+                            class="euiFormLabel euiFormRow__label"
+                            for="random_html_id"
+                          >
+                            Window delay
+                          </label>
                         </div>
                         <div
-                          class="euiTableCellContent"
+                          class="euiFormRow__fieldWrapper"
                         >
-                          <span
-                            class="euiTableCellContent__text"
+                          <div
+                            class="euiText euiText--medium"
+                            id="random_html_id"
                           >
-                            8
-                          </span>
+                            <p
+                              class="enabled"
+                            >
+                              0 minutes
+                            </p>
+                          </div>
                         </div>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
+                      </div>
+                    </div>
+                    <div
+                      class="euiFlexItem"
+                    >
+                      <div
+                        class="euiFormRow euiFormRow--compressed"
+                        id="random_html_id-row"
+                        style="width: 250px;"
+                      >
+                        <div
+                          class="euiFormRow__labelWrapper"
+                        >
+                          <label
+                            class="euiFormLabel euiFormRow__label"
+                            for="random_html_id"
+                          >
+                            Frequency
+                          </label>
+                        </div>
+                        <div
+                          class="euiFormRow__fieldWrapper"
+                        >
+                          <div
+                            class="euiText euiText--medium"
+                            id="random_html_id"
+                          >
+                            <p
+                              class="enabled"
+                            >
+                              undefined Minutes
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div
+                      class="euiFlexItem"
+                    >
+                      <div
+                        class="euiFormRow euiFormRow--compressed"
+                        id="random_html_id-row"
+                        style="width: 250px;"
+                      >
+                        <div
+                          class="euiFormRow__labelWrapper"
+                        >
+                          <label
+                            class="euiFormLabel euiFormRow__label"
+                            for="random_html_id"
+                          >
+                            History
+                          </label>
+                        </div>
+                        <div
+                          class="euiFormRow__fieldWrapper"
+                        >
+                          <div
+                            class="euiText euiText--medium"
+                            id="random_html_id"
+                          >
+                            <p
+                              class="enabled"
+                            >
+                              -
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div
+              class="euiSpacer euiSpacer--l"
+            />
+            <div
+              class="euiPanel euiPanel--paddingMedium euiPanel--borderRadiusMedium euiPanel--plain euiPanel--hasShadow"
+              style="padding: 20px;"
+            >
+              <div
+                class="euiFlexGroup euiFlexGroup--gutterLarge euiFlexGroup--alignItemsCenter euiFlexGroup--justifyContentSpaceBetween euiFlexGroup--directionRow euiFlexGroup--responsive"
+                style="padding: 0px;"
+              >
+                <div
+                  class="euiFlexItem"
+                >
+                  <h3
+                    class="euiTitle euiTitle--small"
+                    data-test-subj="contentPanelTitle"
+                  >
+                    Additional settings
+                  </h3>
+                  <div
+                    class="euiFlexGroup euiFlexGroup--gutterLarge euiFlexGroup--directionRow euiFlexGroup--responsive"
+                  >
+                    <div
+                      class="euiFlexItem content-panel-subTitle"
+                      style="line-height: normal; max-width: 75%;"
+                    />
+                  </div>
+                </div>
+                <div
+                  class="euiFlexItem euiFlexItem--flexGrowZero"
+                >
+                  <div
+                    class="euiFlexGroup euiFlexGroup--gutterMedium euiFlexGroup--alignItemsCenter euiFlexGroup--justifyContentSpaceBetween euiFlexGroup--directionRow euiFlexGroup--responsive"
+                  >
+                    <div
+                      class="euiFlexItem"
+                    />
+                  </div>
+                </div>
+              </div>
+              <div>
+                <hr
+                  class="euiHorizontalRule euiHorizontalRule--full euiHorizontalRule--marginSmall"
+                />
+                <div
+                  style="padding: 10px 0px;"
+                >
+                  <div
+                    class="euiBasicTable header-single-value-euiBasicTable"
+                  >
+                    <div>
+                      <div
+                        class="euiTableHeaderMobile"
+                      >
+                        <div
+                          class="euiFlexGroup euiFlexGroup--gutterLarge euiFlexGroup--alignItemsBaseline euiFlexGroup--justifyContentSpaceBetween euiFlexGroup--directionRow"
+                        >
+                          <div
+                            class="euiFlexItem euiFlexItem--flexGrowZero"
+                          />
+                          <div
+                            class="euiFlexItem euiFlexItem--flexGrowZero"
+                          />
+                        </div>
+                      </div>
+                      <table
+                        class="euiTable euiTable--responsive"
+                        id="random_html_id"
+                        tabindex="-1"
+                      >
+                        <caption
+                          class="euiScreenReaderOnly euiTableCaption"
+                        />
+                        <thead>
+                          <tr>
+                            <th
+                              class="euiTableHeaderCell"
+                              data-test-subj="tableHeaderCell_categoryField_0"
+                              role="columnheader"
+                              scope="col"
+                            >
+                              <span
+                                class="euiTableCellContent"
+                              >
+                                <span
+                                  class="euiTableCellContent__text"
+                                  title="Category field"
+                                >
+                                  Category field
+                                </span>
+                              </span>
+                            </th>
+                            <th
+                              class="euiTableHeaderCell"
+                              data-test-subj="tableHeaderCell_shingleSize_1"
+                              role="columnheader"
+                              scope="col"
+                            >
+                              <span
+                                class="euiTableCellContent"
+                              >
+                                <span
+                                  class="euiTableCellContent__text"
+                                  title="Shingle size"
+                                >
+                                  Shingle size
+                                </span>
+                              </span>
+                            </th>
+                            <th
+                              class="euiTableHeaderCell"
+                              data-test-subj="tableHeaderCell_imputationMethod_2"
+                              role="columnheader"
+                              scope="col"
+                            >
+                              <span
+                                class="euiTableCellContent"
+                              >
+                                <span
+                                  class="euiTableCellContent__text"
+                                  title="Imputation method"
+                                >
+                                  Imputation method
+                                </span>
+                              </span>
+                            </th>
+                            <th
+                              class="euiTableHeaderCell"
+                              data-test-subj="tableHeaderCell_customValues_3"
+                              role="columnheader"
+                              scope="col"
+                            >
+                              <span
+                                class="euiTableCellContent"
+                              >
+                                <span
+                                  class="euiTableCellContent__text"
+                                  title="Custom values"
+                                >
+                                  Custom values
+                                </span>
+                              </span>
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr
+                            class="euiTableRow"
+                          >
+                            <td
+                              class="euiTableRowCell"
+                            >
+                              <div
+                                class="euiTableRowCell__mobileHeader euiTableRowCell--hideForDesktop"
+                              >
+                                Category field
+                              </div>
+                              <div
+                                class="euiTableCellContent"
+                              >
+                                <span
+                                  class="euiTableCellContent__text"
+                                >
+                                  -
+                                </span>
+                              </div>
+                            </td>
+                            <td
+                              class="euiTableRowCell"
+                            >
+                              <div
+                                class="euiTableRowCell__mobileHeader euiTableRowCell--hideForDesktop"
+                              >
+                                Shingle size
+                              </div>
+                              <div
+                                class="euiTableCellContent"
+                              >
+                                <span
+                                  class="euiTableCellContent__text"
+                                >
+                                  8
+                                </span>
+                              </div>
+                            </td>
+                            <td
+                              class="euiTableRowCell"
+                            >
+                              <div
+                                class="euiTableRowCell__mobileHeader euiTableRowCell--hideForDesktop"
+                              >
+                                Imputation method
+                              </div>
+                              <div
+                                class="euiTableCellContent"
+                              >
+                                <span
+                                  class="euiTableCellContent__text"
+                                >
+                                  ignore
+                                </span>
+                              </div>
+                            </td>
+                            <td
+                              class="euiTableRowCell"
+                            >
+                              <div
+                                class="euiTableRowCell__mobileHeader euiTableRowCell--hideForDesktop"
+                              >
+                                Custom values
+                              </div>
+                              <div
+                                class="euiTableCellContent euiTableCellContent--overflowingContent"
+                              >
+                                <div
+                                  class=""
+                                >
+                                  <p>
+                                    -
+                                  </p>
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
             <div
@@ -950,6 +1197,23 @@ exports[`<ReviewAndCreate /> spec renders the component, validation loading 1`] 
                                 </span>
                               </span>
                             </th>
+                            <th
+                              class="euiTableHeaderCell"
+                              data-test-subj="tableHeaderCell_suppressionRule_3"
+                              role="columnheader"
+                              scope="col"
+                            >
+                              <span
+                                class="euiTableCellContent"
+                              >
+                                <span
+                                  class="euiTableCellContent__text"
+                                  title="Anomaly Criteria"
+                                >
+                                  Anomaly Criteria
+                                </span>
+                              </span>
+                            </th>
                           </tr>
                         </thead>
                         <tbody>
@@ -958,7 +1222,7 @@ exports[`<ReviewAndCreate /> spec renders the component, validation loading 1`] 
                           >
                             <td
                               class="euiTableRowCell euiTableRowCell--isMobileFullWidth"
-                              colspan="3"
+                              colspan="4"
                             >
                               <div
                                 class="euiTableCellContent euiTableCellContent--alignCenter"
@@ -1021,7 +1285,7 @@ exports[`<ReviewAndCreate /> spec renders the component, validation loading 1`] 
               class="euiFlexItem"
             >
               <button
-                class="euiButton euiButton--primary"
+                class="euiButton euiButton--primary euiButton--small"
                 data-test-subj="editScheduleButton"
                 type="button"
               >
@@ -1056,7 +1320,7 @@ exports[`<ReviewAndCreate /> spec renders the component, validation loading 1`] 
               class="euiFlexItem"
             >
               <div
-                class="euiFormRow"
+                class="euiFormRow euiFormRow--compressed"
                 id="random_html_id-row"
                 style="width: 250px;"
               >
@@ -1090,7 +1354,7 @@ exports[`<ReviewAndCreate /> spec renders the component, validation loading 1`] 
               class="euiFlexItem"
             >
               <div
-                class="euiFormRow"
+                class="euiFormRow euiFormRow--compressed"
                 id="random_html_id-row"
                 style="width: 250px;"
               >
@@ -1143,12 +1407,14 @@ exports[`issue in detector validation issues in feature query 1`] = `
         <div
           class="euiPageHeaderSection"
         >
-          <h1
-            class="euiTitle euiTitle--large"
+          <div
+            class="euiText euiText--small"
             data-test-subj="reviewAndCreateTitle"
           >
-            Review and create 
-          </h1>
+            <h1>
+              Review and create 
+            </h1>
+          </div>
         </div>
       </header>
       <div
@@ -1187,7 +1453,7 @@ exports[`issue in detector validation issues in feature query 1`] = `
                 class="euiFlexItem"
               >
                 <button
-                  class="euiButton euiButton--primary"
+                  class="euiButton euiButton--primary euiButton--small"
                   data-test-subj="editDetectorSettingsButton"
                   type="button"
                 >
@@ -1252,7 +1518,7 @@ exports[`issue in detector validation issues in feature query 1`] = `
                 data-test-subj="detectorNameCell"
               >
                 <div
-                  class="euiFormRow"
+                  class="euiFormRow euiFormRow--compressed"
                   id="random_html_id-row"
                   style="width: 250px;"
                 >
@@ -1285,7 +1551,7 @@ exports[`issue in detector validation issues in feature query 1`] = `
                 data-test-subj="indexNameCell"
               >
                 <div
-                  class="euiFormRow"
+                  class="euiFormRow euiFormRow--compressed"
                   id="random_html_id-row"
                   style="width: 250px;"
                 >
@@ -1308,7 +1574,9 @@ exports[`issue in detector validation issues in feature query 1`] = `
                     >
                       <p
                         class="enabled"
-                      />
+                      >
+                        -
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -1317,7 +1585,7 @@ exports[`issue in detector validation issues in feature query 1`] = `
                 class="euiFlexItem"
               >
                 <div
-                  class="euiFormRow"
+                  class="euiFormRow euiFormRow--compressed"
                   id="random_html_id-row"
                   style="width: 250px;"
                 >
@@ -1358,44 +1626,10 @@ exports[`issue in detector validation issues in feature query 1`] = `
               </div>
               <div
                 class="euiFlexItem"
-              >
-                <div
-                  class="euiFormRow"
-                  id="random_html_id-row"
-                  style="width: 250px;"
-                >
-                  <div
-                    class="euiFormRow__labelWrapper"
-                  >
-                    <label
-                      class="euiFormLabel euiFormRow__label"
-                      for="random_html_id"
-                    >
-                      Detector interval
-                    </label>
-                  </div>
-                  <div
-                    class="euiFormRow__fieldWrapper"
-                  >
-                    <div
-                      class="euiText euiText--medium"
-                      id="random_html_id"
-                    >
-                      <p
-                        class="enabled"
-                      >
-                        10 Minutes
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div
-                class="euiFlexItem"
                 data-test-subj="detectorDescriptionCell"
               >
                 <div
-                  class="euiFormRow"
+                  class="euiFormRow euiFormRow--compressed"
                   id="random_html_id-row"
                   style="width: 250px;"
                 >
@@ -1428,7 +1662,7 @@ exports[`issue in detector validation issues in feature query 1`] = `
                 data-test-subj="timestampNameCell"
               >
                 <div
-                  class="euiFormRow"
+                  class="euiFormRow euiFormRow--compressed"
                   id="random_html_id-row"
                   style="width: 250px;"
                 >
@@ -1460,41 +1694,7 @@ exports[`issue in detector validation issues in feature query 1`] = `
                 class="euiFlexItem"
               >
                 <div
-                  class="euiFormRow"
-                  id="random_html_id-row"
-                  style="width: 250px;"
-                >
-                  <div
-                    class="euiFormRow__labelWrapper"
-                  >
-                    <label
-                      class="euiFormLabel euiFormRow__label"
-                      for="random_html_id"
-                    >
-                      Window delay
-                    </label>
-                  </div>
-                  <div
-                    class="euiFormRow__fieldWrapper"
-                  >
-                    <div
-                      class="euiText euiText--medium"
-                      id="random_html_id"
-                    >
-                      <p
-                        class="enabled"
-                      >
-                        1 Minutes
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div
-                class="euiFlexItem"
-              >
-                <div
-                  class="euiFormRow"
+                  class="euiFormRow euiFormRow--compressed"
                   id="random_html_id-row"
                   style="width: 250px;"
                 >
@@ -1528,7 +1728,7 @@ exports[`issue in detector validation issues in feature query 1`] = `
                 class="euiFlexItem"
               >
                 <div
-                  class="euiFormRow"
+                  class="euiFormRow euiFormRow--compressed"
                   id="random_html_id-row"
                   style="width: 250px;"
                 >
@@ -1562,7 +1762,7 @@ exports[`issue in detector validation issues in feature query 1`] = `
                 class="euiFlexItem"
               >
                 <div
-                  class="euiFormRow"
+                  class="euiFormRow euiFormRow--compressed"
                   id="random_html_id-row"
                   style="width: 250px;"
                 >
@@ -1596,7 +1796,7 @@ exports[`issue in detector validation issues in feature query 1`] = `
                 class="euiFlexItem"
               >
                 <div
-                  class="euiFormRow"
+                  class="euiFormRow euiFormRow--compressed"
                   id="random_html_id-row"
                   style="width: 250px;"
                 >
@@ -1630,7 +1830,7 @@ exports[`issue in detector validation issues in feature query 1`] = `
                 class="euiFlexItem"
               >
                 <div
-                  class="euiFormRow"
+                  class="euiFormRow euiFormRow--compressed"
                   id="random_html_id-row"
                   style="width: 250px;"
                 >
@@ -1703,7 +1903,7 @@ exports[`issue in detector validation issues in feature query 1`] = `
                 class="euiFlexItem"
               >
                 <button
-                  class="euiButton euiButton--primary"
+                  class="euiButton euiButton--primary euiButton--small"
                   type="button"
                 >
                   <span
@@ -1774,112 +1974,423 @@ exports[`issue in detector validation issues in feature query 1`] = `
             </div>
             <div>
               <div
-                class="euiBasicTable header-single-value-euiBasicTable"
+                class="euiPanel euiPanel--paddingMedium euiPanel--borderRadiusMedium euiPanel--plain euiPanel--hasShadow"
+                style="padding: 20px;"
               >
-                <div>
+                <div
+                  class="euiFlexGroup euiFlexGroup--gutterLarge euiFlexGroup--alignItemsCenter euiFlexGroup--justifyContentSpaceBetween euiFlexGroup--directionRow euiFlexGroup--responsive"
+                  style="padding: 0px;"
+                >
                   <div
-                    class="euiTableHeaderMobile"
+                    class="euiFlexItem"
                   >
+                    <h3
+                      class="euiTitle euiTitle--small"
+                      data-test-subj="contentPanelTitle"
+                    >
+                      Operational setting
+                    </h3>
                     <div
-                      class="euiFlexGroup euiFlexGroup--gutterLarge euiFlexGroup--alignItemsBaseline euiFlexGroup--justifyContentSpaceBetween euiFlexGroup--directionRow"
+                      class="euiFlexGroup euiFlexGroup--gutterLarge euiFlexGroup--directionRow euiFlexGroup--responsive"
                     >
                       <div
-                        class="euiFlexItem euiFlexItem--flexGrowZero"
-                      />
-                      <div
-                        class="euiFlexItem euiFlexItem--flexGrowZero"
+                        class="euiFlexItem content-panel-subTitle"
+                        style="line-height: normal; max-width: 75%;"
                       />
                     </div>
                   </div>
-                  <table
-                    class="euiTable euiTable--responsive"
-                    id="random_html_id"
-                    tabindex="-1"
+                  <div
+                    class="euiFlexItem euiFlexItem--flexGrowZero"
                   >
-                    <caption
-                      class="euiScreenReaderOnly euiTableCaption"
-                    />
-                    <thead>
-                      <tr>
-                        <th
-                          class="euiTableHeaderCell"
-                          data-test-subj="tableHeaderCell_categoryField_0"
-                          role="columnheader"
-                          scope="col"
-                        >
-                          <span
-                            class="euiTableCellContent"
-                          >
-                            <span
-                              class="euiTableCellContent__text"
-                              title="Category field"
-                            >
-                              Category field
-                            </span>
-                          </span>
-                        </th>
-                        <th
-                          class="euiTableHeaderCell"
-                          data-test-subj="tableHeaderCell_shingleSize_1"
-                          role="columnheader"
-                          scope="col"
-                        >
-                          <span
-                            class="euiTableCellContent"
-                          >
-                            <span
-                              class="euiTableCellContent__text"
-                              title="Shingle size"
-                            >
-                              Shingle size
-                            </span>
-                          </span>
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr
-                        class="euiTableRow"
+                    <div
+                      class="euiFlexGroup euiFlexGroup--gutterMedium euiFlexGroup--alignItemsCenter euiFlexGroup--justifyContentSpaceBetween euiFlexGroup--directionRow euiFlexGroup--responsive"
+                    >
+                      <div
+                        class="euiFlexItem"
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <hr
+                    class="euiHorizontalRule euiHorizontalRule--full euiHorizontalRule--marginSmall"
+                  />
+                  <div
+                    style="padding: 10px 0px;"
+                  >
+                    <div
+                      class="euiFlexGrid euiFlexGrid--gutterLarge euiFlexGrid--halves euiFlexGrid--responsive"
+                    >
+                      <div
+                        class="euiFlexItem"
                       >
-                        <td
-                          class="euiTableRowCell"
+                        <div
+                          class="euiFormRow euiFormRow--compressed"
+                          id="random_html_id-row"
+                          style="width: 250px;"
                         >
                           <div
-                            class="euiTableRowCell__mobileHeader euiTableRowCell--hideForDesktop"
+                            class="euiFormRow__labelWrapper"
                           >
-                            Category field
+                            <label
+                              class="euiFormLabel euiFormRow__label"
+                              for="random_html_id"
+                            >
+                              Detector interval
+                            </label>
                           </div>
                           <div
-                            class="euiTableCellContent"
+                            class="euiFormRow__fieldWrapper"
                           >
-                            <span
-                              class="euiTableCellContent__text"
+                            <div
+                              class="euiText euiText--medium"
+                              id="random_html_id"
                             >
-                              -
-                            </span>
+                              <p
+                                class="enabled"
+                              >
+                                undefined Minutes
+                              </p>
+                            </div>
                           </div>
-                        </td>
-                        <td
-                          class="euiTableRowCell"
+                        </div>
+                      </div>
+                      <div
+                        class="euiFlexItem"
+                      >
+                        <div
+                          class="euiFormRow euiFormRow--compressed"
+                          id="random_html_id-row"
+                          style="width: 250px;"
                         >
                           <div
-                            class="euiTableRowCell__mobileHeader euiTableRowCell--hideForDesktop"
+                            class="euiFormRow__labelWrapper"
                           >
-                            Shingle size
+                            <label
+                              class="euiFormLabel euiFormRow__label"
+                              for="random_html_id"
+                            >
+                              Window delay
+                            </label>
                           </div>
                           <div
-                            class="euiTableCellContent"
+                            class="euiFormRow__fieldWrapper"
                           >
-                            <span
-                              class="euiTableCellContent__text"
+                            <div
+                              class="euiText euiText--medium"
+                              id="random_html_id"
                             >
-                              8
-                            </span>
+                              <p
+                                class="enabled"
+                              >
+                                0 minutes
+                              </p>
+                            </div>
                           </div>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
+                        </div>
+                      </div>
+                      <div
+                        class="euiFlexItem"
+                      >
+                        <div
+                          class="euiFormRow euiFormRow--compressed"
+                          id="random_html_id-row"
+                          style="width: 250px;"
+                        >
+                          <div
+                            class="euiFormRow__labelWrapper"
+                          >
+                            <label
+                              class="euiFormLabel euiFormRow__label"
+                              for="random_html_id"
+                            >
+                              Frequency
+                            </label>
+                          </div>
+                          <div
+                            class="euiFormRow__fieldWrapper"
+                          >
+                            <div
+                              class="euiText euiText--medium"
+                              id="random_html_id"
+                            >
+                              <p
+                                class="enabled"
+                              >
+                                undefined Minutes
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div
+                        class="euiFlexItem"
+                      >
+                        <div
+                          class="euiFormRow euiFormRow--compressed"
+                          id="random_html_id-row"
+                          style="width: 250px;"
+                        >
+                          <div
+                            class="euiFormRow__labelWrapper"
+                          >
+                            <label
+                              class="euiFormLabel euiFormRow__label"
+                              for="random_html_id"
+                            >
+                              History
+                            </label>
+                          </div>
+                          <div
+                            class="euiFormRow__fieldWrapper"
+                          >
+                            <div
+                              class="euiText euiText--medium"
+                              id="random_html_id"
+                            >
+                              <p
+                                class="enabled"
+                              >
+                                -
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div
+                class="euiSpacer euiSpacer--l"
+              />
+              <div
+                class="euiPanel euiPanel--paddingMedium euiPanel--borderRadiusMedium euiPanel--plain euiPanel--hasShadow"
+                style="padding: 20px;"
+              >
+                <div
+                  class="euiFlexGroup euiFlexGroup--gutterLarge euiFlexGroup--alignItemsCenter euiFlexGroup--justifyContentSpaceBetween euiFlexGroup--directionRow euiFlexGroup--responsive"
+                  style="padding: 0px;"
+                >
+                  <div
+                    class="euiFlexItem"
+                  >
+                    <h3
+                      class="euiTitle euiTitle--small"
+                      data-test-subj="contentPanelTitle"
+                    >
+                      Additional settings
+                    </h3>
+                    <div
+                      class="euiFlexGroup euiFlexGroup--gutterLarge euiFlexGroup--directionRow euiFlexGroup--responsive"
+                    >
+                      <div
+                        class="euiFlexItem content-panel-subTitle"
+                        style="line-height: normal; max-width: 75%;"
+                      />
+                    </div>
+                  </div>
+                  <div
+                    class="euiFlexItem euiFlexItem--flexGrowZero"
+                  >
+                    <div
+                      class="euiFlexGroup euiFlexGroup--gutterMedium euiFlexGroup--alignItemsCenter euiFlexGroup--justifyContentSpaceBetween euiFlexGroup--directionRow euiFlexGroup--responsive"
+                    >
+                      <div
+                        class="euiFlexItem"
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <hr
+                    class="euiHorizontalRule euiHorizontalRule--full euiHorizontalRule--marginSmall"
+                  />
+                  <div
+                    style="padding: 10px 0px;"
+                  >
+                    <div
+                      class="euiBasicTable header-single-value-euiBasicTable"
+                    >
+                      <div>
+                        <div
+                          class="euiTableHeaderMobile"
+                        >
+                          <div
+                            class="euiFlexGroup euiFlexGroup--gutterLarge euiFlexGroup--alignItemsBaseline euiFlexGroup--justifyContentSpaceBetween euiFlexGroup--directionRow"
+                          >
+                            <div
+                              class="euiFlexItem euiFlexItem--flexGrowZero"
+                            />
+                            <div
+                              class="euiFlexItem euiFlexItem--flexGrowZero"
+                            />
+                          </div>
+                        </div>
+                        <table
+                          class="euiTable euiTable--responsive"
+                          id="random_html_id"
+                          tabindex="-1"
+                        >
+                          <caption
+                            class="euiScreenReaderOnly euiTableCaption"
+                          />
+                          <thead>
+                            <tr>
+                              <th
+                                class="euiTableHeaderCell"
+                                data-test-subj="tableHeaderCell_categoryField_0"
+                                role="columnheader"
+                                scope="col"
+                              >
+                                <span
+                                  class="euiTableCellContent"
+                                >
+                                  <span
+                                    class="euiTableCellContent__text"
+                                    title="Category field"
+                                  >
+                                    Category field
+                                  </span>
+                                </span>
+                              </th>
+                              <th
+                                class="euiTableHeaderCell"
+                                data-test-subj="tableHeaderCell_shingleSize_1"
+                                role="columnheader"
+                                scope="col"
+                              >
+                                <span
+                                  class="euiTableCellContent"
+                                >
+                                  <span
+                                    class="euiTableCellContent__text"
+                                    title="Shingle size"
+                                  >
+                                    Shingle size
+                                  </span>
+                                </span>
+                              </th>
+                              <th
+                                class="euiTableHeaderCell"
+                                data-test-subj="tableHeaderCell_imputationMethod_2"
+                                role="columnheader"
+                                scope="col"
+                              >
+                                <span
+                                  class="euiTableCellContent"
+                                >
+                                  <span
+                                    class="euiTableCellContent__text"
+                                    title="Imputation method"
+                                  >
+                                    Imputation method
+                                  </span>
+                                </span>
+                              </th>
+                              <th
+                                class="euiTableHeaderCell"
+                                data-test-subj="tableHeaderCell_customValues_3"
+                                role="columnheader"
+                                scope="col"
+                              >
+                                <span
+                                  class="euiTableCellContent"
+                                >
+                                  <span
+                                    class="euiTableCellContent__text"
+                                    title="Custom values"
+                                  >
+                                    Custom values
+                                  </span>
+                                </span>
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr
+                              class="euiTableRow"
+                            >
+                              <td
+                                class="euiTableRowCell"
+                              >
+                                <div
+                                  class="euiTableRowCell__mobileHeader euiTableRowCell--hideForDesktop"
+                                >
+                                  Category field
+                                </div>
+                                <div
+                                  class="euiTableCellContent"
+                                >
+                                  <span
+                                    class="euiTableCellContent__text"
+                                  >
+                                    -
+                                  </span>
+                                </div>
+                              </td>
+                              <td
+                                class="euiTableRowCell"
+                              >
+                                <div
+                                  class="euiTableRowCell__mobileHeader euiTableRowCell--hideForDesktop"
+                                >
+                                  Shingle size
+                                </div>
+                                <div
+                                  class="euiTableCellContent"
+                                >
+                                  <span
+                                    class="euiTableCellContent__text"
+                                  >
+                                    8
+                                  </span>
+                                </div>
+                              </td>
+                              <td
+                                class="euiTableRowCell"
+                              >
+                                <div
+                                  class="euiTableRowCell__mobileHeader euiTableRowCell--hideForDesktop"
+                                >
+                                  Imputation method
+                                </div>
+                                <div
+                                  class="euiTableCellContent"
+                                >
+                                  <span
+                                    class="euiTableCellContent__text"
+                                  >
+                                    ignore
+                                  </span>
+                                </div>
+                              </td>
+                              <td
+                                class="euiTableRowCell"
+                              >
+                                <div
+                                  class="euiTableRowCell__mobileHeader euiTableRowCell--hideForDesktop"
+                                >
+                                  Custom values
+                                </div>
+                                <div
+                                  class="euiTableCellContent euiTableCellContent--overflowingContent"
+                                >
+                                  <div
+                                    class=""
+                                  >
+                                    <p>
+                                      -
+                                    </p>
+                                  </div>
+                                </div>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
               <div
@@ -2091,6 +2602,23 @@ exports[`issue in detector validation issues in feature query 1`] = `
                                   </span>
                                 </span>
                               </th>
+                              <th
+                                class="euiTableHeaderCell"
+                                data-test-subj="tableHeaderCell_suppressionRule_3"
+                                role="columnheader"
+                                scope="col"
+                              >
+                                <span
+                                  class="euiTableCellContent"
+                                >
+                                  <span
+                                    class="euiTableCellContent__text"
+                                    title="Anomaly Criteria"
+                                  >
+                                    Anomaly Criteria
+                                  </span>
+                                </span>
+                              </th>
                             </tr>
                           </thead>
                           <tbody>
@@ -2099,7 +2627,7 @@ exports[`issue in detector validation issues in feature query 1`] = `
                             >
                               <td
                                 class="euiTableRowCell euiTableRowCell--isMobileFullWidth"
-                                colspan="3"
+                                colspan="4"
                               >
                                 <div
                                   class="euiTableCellContent euiTableCellContent--alignCenter"
@@ -2162,7 +2690,7 @@ exports[`issue in detector validation issues in feature query 1`] = `
                 class="euiFlexItem"
               >
                 <button
-                  class="euiButton euiButton--primary"
+                  class="euiButton euiButton--primary euiButton--small"
                   data-test-subj="editScheduleButton"
                   type="button"
                 >
@@ -2197,7 +2725,7 @@ exports[`issue in detector validation issues in feature query 1`] = `
                 class="euiFlexItem"
               >
                 <div
-                  class="euiFormRow"
+                  class="euiFormRow euiFormRow--compressed"
                   id="random_html_id-row"
                   style="width: 250px;"
                 >
@@ -2231,7 +2759,7 @@ exports[`issue in detector validation issues in feature query 1`] = `
                 class="euiFlexItem"
               >
                 <div
-                  class="euiFormRow"
+                  class="euiFormRow euiFormRow--compressed"
                   id="random_html_id-row"
                   style="width: 250px;"
                 >
@@ -2275,7 +2803,7 @@ exports[`issue in detector validation issues in feature query 1`] = `
       class="euiFlexItem euiFlexItem--flexGrowZero"
     >
       <button
-        class="euiButtonEmpty euiButtonEmpty--primary"
+        class="euiButtonEmpty euiButtonEmpty--primary euiButtonEmpty--small"
         type="button"
       >
         <span
@@ -2293,7 +2821,7 @@ exports[`issue in detector validation issues in feature query 1`] = `
       class="euiFlexItem euiFlexItem--flexGrowZero"
     >
       <button
-        class="euiButton euiButton--primary"
+        class="euiButton euiButton--primary euiButton--small"
         data-test-subj="reviewAndCreatePreviousButton"
         type="button"
       >
@@ -2327,7 +2855,7 @@ exports[`issue in detector validation issues in feature query 1`] = `
       class="euiFlexItem euiFlexItem--flexGrowZero"
     >
       <button
-        class="euiButton euiButton--primary euiButton--fill"
+        class="euiButton euiButton--primary euiButton--small euiButton--fill"
         data-test-subj="createDetectorButton"
         type="submit"
       >

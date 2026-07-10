@@ -15,19 +15,19 @@ import {
   EuiText,
   EuiLink,
   EuiTitle,
-  EuiFieldText,
+  EuiCompressedFieldText,
   EuiCallOut,
   EuiSpacer,
-  EuiFormRow,
-  EuiCheckbox,
+  EuiCompressedFormRow,
+  EuiCompressedCheckbox,
   EuiIcon,
-  EuiFieldNumber,
+  EuiCompressedFieldNumber,
 } from '@elastic/eui';
 import { Field, FieldProps, FormikProps, useFormikContext } from 'formik';
 import React, { useEffect, useState } from 'react';
 import ContentPanel from '../../../../components/ContentPanel/ContentPanel';
 import { CUSTOM_AD_RESULT_INDEX_PREFIX } from '../../../../../server/utils/constants';
-import { BASE_DOCS_LINK } from '../../../../utils/constants';
+import { AD_DOCS_LINK } from '../../../../utils/constants';
 import {
   isInvalid,
   getError,
@@ -43,10 +43,17 @@ interface CustomResultIndexProps {
   useDefaultResultIndex?: boolean;
   resultIndex?: string;
   formikProps: FormikProps<DetectorDefinitionFormikValues>;
+  // When true, the detector targets an OpenSearch Serverless (AOSS) collection.
+  // Serverless mandates a custom result index (no default index is created) and
+  // does not support the flattened-result-index ingest pipeline (script
+  // processor is not available). We hide the toggles and hard-wire the values.
+  isServerless?: boolean;
 }
 
 function CustomResultIndex(props: CustomResultIndexProps) {
-  const [enabled, setEnabled] = useState<boolean>(!!props.resultIndex);
+  const { isServerless = false } = props;
+  // On serverless, "Enable custom result index" is implicit — no toggle, always on.
+  const [enabled, setEnabled] = useState<boolean>(isServerless || !!props.resultIndex);
   const [customResultIndexConditionsEnabled, setCustomResultIndexConditionsEnabled] = useState<boolean>(true);
   const customResultIndexMinAge = get(props.formikProps, 'values.resultIndexMinAge');
   const customResultIndexMinSize = get(props.formikProps, 'values.resultIndexMinSize');
@@ -58,13 +65,23 @@ function CustomResultIndex(props: CustomResultIndexProps) {
       if (customResultIndexMinAge === undefined && customResultIndexMinSize === undefined && customResultIndexTTL === undefined) {
         setCustomResultIndexConditionsEnabled(false);
       }
-    } 
+    }
     if (!customResultIndexConditionsEnabled) {
       setFieldValue('resultIndexMinAge', '');
       setFieldValue('resultIndexMinSize', '');
       setFieldValue('resultIndexTtl', '');
     }
   },[customResultIndexConditionsEnabled])
+
+  // On serverless, flattened custom result index is unsupported because AOSS
+  // does not allow the `script` processor in ingest pipelines. Force the field
+  // to false so the detector payload never carries an enabled flag.
+  useEffect(() => {
+    if (isServerless) {
+      setEnabled(true);
+      setFieldValue('flattenCustomResultIndex', false);
+    }
+  }, [isServerless, setFieldValue]);
 
   const hintTextStyle = {
     color: '#69707d',
@@ -89,7 +106,7 @@ function CustomResultIndex(props: CustomResultIndexProps) {
           style={{ lineHeight: 'normal' }}
         >
           Store detector results to your own index.{' '}
-          <EuiLink href={`${BASE_DOCS_LINK}/ad`} target="_blank">
+          <EuiLink href={`${AD_DOCS_LINK}`} target="_blank">
             Learn more
           </EuiLink>
         </EuiText>
@@ -101,20 +118,32 @@ function CustomResultIndex(props: CustomResultIndexProps) {
       >
         {({ field, form }: FieldProps) => (
           <EuiFlexGroup direction="column">
-            <EuiFlexItem>
-              <EuiCheckbox
-                id={'resultIndexCheckbox'}
-                label="Enable custom result index"
-                checked={enabled}
-                disabled={props.isEdit}
-                onChange={() => {
-                  if (enabled) {
-                    form.setFieldValue('resultIndex', '');
-                  }
-                  setEnabled(!enabled);
-                }}
-              />
-            </EuiFlexItem>
+            {isServerless ? (
+              <EuiFlexItem>
+                <EuiCallOut
+                  data-test-subj="serverlessCustomResultIndexRequiredCallout"
+                  title="Custom result index is required on OpenSearch Serverless."
+                  color="primary"
+                  iconType="iInCircle"
+                  size="s"
+                />
+              </EuiFlexItem>
+            ) : (
+              <EuiFlexItem>
+                <EuiCompressedCheckbox
+                  id={'resultIndexCheckbox'}
+                  label="Enable custom result index"
+                  checked={enabled}
+                  disabled={props.isEdit}
+                  onChange={() => {
+                    if (enabled) {
+                      form.setFieldValue('resultIndex', undefined);
+                    }
+                    setEnabled(!enabled);
+                  }}
+                />
+              </EuiFlexItem>
+            )}
 
             {enabled ? (
               <EuiFlexItem>
@@ -130,20 +159,20 @@ function CustomResultIndex(props: CustomResultIndexProps) {
 
             {enabled ? (
               <EuiFlexItem>
-                <EuiFormRow
+                <EuiCompressedFormRow
                   label="Field"
                   isInvalid={isInvalid(field.name, form)}
                   error={getError(field.name, form)}
                   helpText={`Custom result index name must contain less than 255 characters including the prefix "opensearch-ad-plugin-result-". Valid characters are a-z, 0-9, -(hyphen) and _(underscore).`}
                 >
-                  <EuiFieldText
+                  <EuiCompressedFieldText
                     id="resultIndex"
                     placeholder="Enter result index name"
                     prepend={props.isEdit ? '' : CUSTOM_AD_RESULT_INDEX_PREFIX}
                     disabled={props.isEdit}
                     {...field}
                   />
-                </EuiFormRow>
+                </EuiCompressedFormRow>
               </EuiFlexItem>
             ) : null}
           </EuiFlexGroup>
@@ -152,13 +181,13 @@ function CustomResultIndex(props: CustomResultIndexProps) {
 
       <EuiFlexGroup direction="column">
         <EuiFlexItem>
-          { enabled ? (
+          { (enabled && !isServerless) ? (
             <Field
               name="flattenCustomResultIndex">
             {({ field, form }: FieldProps) => (
               <EuiFlexGroup>
                 <EuiFlexItem>
-                  <EuiCheckbox
+                  <EuiCompressedCheckbox
                     id={'flattenCustomResultIndex'}
                     label="Enable flattened custom result index"
                     checked={field.value ? field.value : get(props.formikProps, 'values.flattenCustomResultIndex')}
@@ -173,7 +202,7 @@ function CustomResultIndex(props: CustomResultIndexProps) {
         <EuiFlexItem>
           {enabled ? (
             <EuiFlexItem>
-              <EuiCheckbox
+              <EuiCompressedCheckbox
                 id={'resultIndexConditionCheckbox'}
                 label="Enable custom result index lifecycle management"
                 checked={customResultIndexConditionsEnabled}
@@ -185,9 +214,9 @@ function CustomResultIndex(props: CustomResultIndexProps) {
           ) : null}
         </EuiFlexItem>
       </EuiFlexGroup>
-      
-      { (enabled && customResultIndexConditionsEnabled) ? (<Field 
-        name="resultIndexMinAge" 
+
+      { (enabled && customResultIndexConditionsEnabled) ? (<Field
+        name="resultIndexMinAge"
         validate={(enabled && customResultIndexConditionsEnabled) ? validateEmptyOrPositiveInteger : null}
         >
         {({ field, form }: FieldProps) => (
@@ -208,7 +237,7 @@ function CustomResultIndex(props: CustomResultIndexProps) {
               >
                 <EuiFlexGroup gutterSize="s" alignItems="center">
                   <EuiFlexItem grow={false}>
-                    <EuiFieldNumber
+                    <EuiCompressedFieldNumber
                       name="resultIndexMinAge"
                       id="resultIndexMinAge"
                       data-test-subj="resultIndexMinAge"
@@ -227,7 +256,7 @@ function CustomResultIndex(props: CustomResultIndexProps) {
             </EuiFlexItem>
           </EuiFlexGroup>
         )}
-      </Field>) : null}  
+      </Field>) : null}
 
       {(enabled && customResultIndexConditionsEnabled) ? (<Field
         name="resultIndexMinSize"
@@ -251,7 +280,7 @@ function CustomResultIndex(props: CustomResultIndexProps) {
               >
                 <EuiFlexGroup gutterSize="s" alignItems="center">
                   <EuiFlexItem grow={false}>
-                    <EuiFieldNumber
+                    <EuiCompressedFieldNumber
                       name="resultIndexMinSize"
                       id="resultIndexMinSize"
                       placeholder="Min index size"
@@ -294,7 +323,7 @@ function CustomResultIndex(props: CustomResultIndexProps) {
               >
                 <EuiFlexGroup gutterSize="s" alignItems="center">
                   <EuiFlexItem grow={false}>
-                    <EuiFieldNumber
+                    <EuiCompressedFieldNumber
                       name="resultIndexTtl"
                       id="resultIndexTtl"
                       data-test-subj="resultIndexTtl"

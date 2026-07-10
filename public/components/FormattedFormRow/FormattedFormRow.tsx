@@ -10,43 +10,43 @@
  */
 
 import React, { ReactElement, ReactNode } from 'react';
-import { EuiFormRow, EuiText, EuiLink, EuiIcon } from '@elastic/eui';
+import { EuiCompressedFormRow, EuiText, EuiLink, EuiIcon, EuiToolTip } from '@elastic/eui';
 
 type FormattedFormRowProps = {
   title?: string;
   formattedTitle?: ReactNode;
   children: ReactElement;
-  hint?: string | string[];
+  hint?: string | string[] | ReactNode | ReactNode[];
   isInvalid?: boolean;
   error?: ReactNode | ReactNode[];
   fullWidth?: boolean;
   helpText?: string;
   hintLink?: string;
+  linkToolTip?: boolean;
 };
 
 export const FormattedFormRow = (props: FormattedFormRowProps) => {
-  let hints;
-  if (props.hint) {
-    const hintTexts = Array.isArray(props.hint) ? props.hint : [props.hint];
-    hints = hintTexts.map((hint, i) => {
-      return (
+  const hints = props.hint
+    ? (Array.isArray(props.hint) ? props.hint : [props.hint]).map((hint, i) => (
         <EuiText key={i} className="sublabel" style={{ maxWidth: '400px' }}>
           {hint}
-          {props.hintLink ? ' ' : null}
-          {props.hintLink ? (
-            <EuiLink href={props.hintLink} target="_blank">
-              Learn more
-            </EuiLink>
-          ) : null}
+          {props.hintLink && (
+            <>
+              {' '}
+              <EuiLink href={props.hintLink} target="_blank">
+                Learn more
+              </EuiLink>
+            </>
+          )}
         </EuiText>
-      );
-    });
-  }
+      ))
+    : null;
 
-  const { formattedTitle, ...euiFormRowProps } = props;
+  // Extract hintLink to avoid passing it to EuiCompressedFormRow as an unknown prop
+  const { formattedTitle, hintLink, linkToolTip, ...euiFormRowProps } = props;
 
   return (
-    <EuiFormRow
+    <EuiCompressedFormRow
       label={
         <div style={{ lineHeight: '8px' }}>
           {formattedTitle ? formattedTitle : <p>{props.title}</p>}
@@ -57,6 +57,6 @@ export const FormattedFormRow = (props: FormattedFormRowProps) => {
       {...euiFormRowProps}
     >
       {props.children}
-    </EuiFormRow>
+    </EuiCompressedFormRow>
   );
 };

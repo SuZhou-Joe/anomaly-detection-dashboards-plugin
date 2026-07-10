@@ -9,21 +9,21 @@ import {
   EuiFlyoutBody,
   EuiFlyoutFooter,
   EuiTitle,
-  EuiButton,
+  EuiSmallButton,
   EuiFormFieldset,
   EuiCheckableCard,
   EuiSpacer,
   EuiIcon,
   EuiText,
-  EuiSwitch,
-  EuiFormRow,
-  EuiFieldText,
-  EuiCheckbox,
+  EuiCompressedSwitch,
+  EuiCompressedFormRow,
+  EuiCompressedFieldText,
+  EuiCompressedCheckbox,
   EuiFlexItem,
   EuiFlexGroup,
-  EuiFieldNumber,
+  EuiCompressedFieldNumber,
   EuiCallOut,
-  EuiButtonEmpty,
+  EuiSmallButtonEmpty,
   EuiPanel,
 } from '@elastic/eui';
 import './styles.scss';
@@ -134,16 +134,23 @@ function AddAnomalyDetector({
   >();
 
   const indexPatternId = embeddable.vis.data.aggs.indexPattern.id;
-  const [dataSourceId, setDataSourceId] = useState<string | undefined>(undefined);
+  const [dataSourceId, setDataSourceId] = useState<string | undefined>(
+    undefined
+  );
 
   async function getDataSourceId() {
     try {
-      const indexPattern = await getSavedObjectsClient().get('index-pattern', indexPatternId);
+      const indexPattern = await getSavedObjectsClient().get(
+        'index-pattern',
+        indexPatternId
+      );
       const refs = indexPattern.references as References[];
-      const foundDataSourceId = refs.find(ref => ref.type === 'data-source')?.id;
-      setDataSourceId(foundDataSourceId); 
+      const foundDataSourceId = refs.find(
+        (ref) => ref.type === 'data-source'
+      )?.id;
+      setDataSourceId(foundDataSourceId);
     } catch (error) {
-      console.error("Error fetching index pattern:", error);
+      console.error('Error fetching index pattern:', error);
     }
   }
 
@@ -152,8 +159,12 @@ function AddAnomalyDetector({
     async function fetchData() {
       await getDataSourceId();
 
-      const getIndicesDispatchCall = dispatch(getIndices(queryText, dataSourceId));
-      const getMappingDispatchCall =  dispatch(getMappings(embeddable.vis.data.aggs.indexPattern.title, dataSourceId));
+      const getIndicesDispatchCall = dispatch(
+        getIndices(queryText, dataSourceId)
+      );
+      const getMappingDispatchCall = dispatch(
+        getMappings([embeddable.vis.data.aggs.indexPattern.title], dataSourceId)
+      );
       await Promise.all([getIndicesDispatchCall, getMappingDispatchCall]);
     }
 
@@ -167,7 +178,7 @@ function AddAnomalyDetector({
     }
     fetchData();
     createEmbeddable();
-  }, [dataSourceId]); 
+  }, [dataSourceId]);
 
   const [isShowVis, setIsShowVis] = useState(false);
   const [accordionsOpen, setAccordionsOpen] = useState({ modelFeatures: true });
@@ -311,7 +322,7 @@ function AddAnomalyDetector({
               {title}
             </h4>
           </EuiTitle>
-          <EuiSwitch
+          <EuiCompressedSwitch
             label="Show visualization"
             checked={isShowVis}
             onChange={() => setIsShowVis(!isShowVis)}
@@ -335,7 +346,7 @@ function AddAnomalyDetector({
       name: OVERLAY_ANOMALIES,
       args: {
         detectorId: detectorId,
-        dataSourceId: dataSourceId
+        dataSourceId: dataSourceId,
       },
     } as VisLayerExpressionFn;
 
@@ -465,7 +476,7 @@ function AddAnomalyDetector({
 
   const getEverythingSuccessfulButton = (detectorId, shingleSize) => {
     return (
-      <EuiText>
+      <EuiText size="s">
         <p>
           Attempting to initialize the detector with historical data. This
           initializing process takes approximately 1 minute if you have data in
@@ -478,9 +489,9 @@ function AddAnomalyDetector({
             </EuiFlexItem>
             <EuiFlexItem grow={false}>
               <div>
-                <EuiButton onClick={() => openAlerting(detectorId)}>
+                <EuiSmallButton onClick={() => openAlerting(detectorId)}>
                   Set up alerts
-                </EuiButton>
+                </EuiSmallButton>
               </div>
             </EuiFlexItem>
           </EuiFlexGroup>
@@ -586,9 +597,9 @@ function AddAnomalyDetector({
         {(formikProps) => (
           <>
             <EuiFlyoutHeader hasBorder>
-              <EuiTitle>
+              <EuiText size="s">
                 <h2 id="add-anomaly-detector__title">Add anomaly detector</h2>
-              </EuiTitle>
+              </EuiText>
             </EuiFlyoutHeader>
             <EuiFlyoutBody>
               {associationLimitReached ? (
@@ -669,7 +680,7 @@ function AddAnomalyDetector({
                         isOpen={accordionsOpen.detectorDetails}
                         onToggle={() => onAccordionToggle('detectorDetails')}
                         subTitle={
-                          <EuiText size="m">
+                          <EuiText size="s">
                             <p>
                               Detector interval: {intervalValue} minute(s);
                               Window delay: {delayValue} minute(s)
@@ -684,7 +695,7 @@ function AddAnomalyDetector({
                               isInvalid={isInvalid(field.name, form)}
                               error={getError(field.name, form)}
                             >
-                              <EuiFieldText
+                              <EuiCompressedFieldText
                                 data-test-subj="detectorNameTextInputFlyout"
                                 isInvalid={isInvalid(field.name, form)}
                                 {...field}
@@ -713,7 +724,7 @@ function AddAnomalyDetector({
                                     alignItems="center"
                                   >
                                     <EuiFlexItem grow={false}>
-                                      <EuiFieldNumber
+                                      <EuiCompressedFieldNumber
                                         id="detectionInterval"
                                         placeholder="Detector interval"
                                         data-test-subj="detectionInterval"
@@ -750,7 +761,7 @@ function AddAnomalyDetector({
                             >
                               <EuiFlexGroup gutterSize="s" alignItems="center">
                                 <EuiFlexItem grow={false}>
-                                  <EuiFieldNumber
+                                  <EuiCompressedFieldNumber
                                     id="windowDelay"
                                     placeholder="Window delay"
                                     data-test-subj="windowDelay"
@@ -829,7 +840,7 @@ function AddAnomalyDetector({
                                   alignItems="center"
                                 >
                                   <EuiFlexItem grow={false}>
-                                    <EuiFieldNumber
+                                    <EuiCompressedFieldNumber
                                       id="shingleSize"
                                       placeholder="Shingle size"
                                       data-test-subj="shingleSize"
@@ -857,7 +868,7 @@ function AddAnomalyDetector({
                             {({ field, form }: FieldProps) => (
                               <EuiFlexGroup direction="column">
                                 <EuiFlexItem>
-                                  <EuiCheckbox
+                                  <EuiCompressedCheckbox
                                     id={'resultIndexCheckbox'}
                                     label="Enable custom result index"
                                     checked={enabled}
@@ -884,18 +895,18 @@ function AddAnomalyDetector({
 
                                 {enabled ? (
                                   <EuiFlexItem>
-                                    <EuiFormRow
+                                    <EuiCompressedFormRow
                                       label="Field"
                                       isInvalid={isInvalid(field.name, form)}
                                       helpText={`Custom result index name must contain less than 255 characters including the prefix "opensearch-ad-plugin-result-". Valid characters are a-z, 0-9, -(hyphen) and _(underscore).`}
                                     >
-                                      <EuiFieldText
+                                      <EuiCompressedFieldText
                                         id="resultIndex"
                                         placeholder="Enter result index name"
                                         prepend={CUSTOM_AD_RESULT_INDEX_PREFIX}
                                         {...field}
                                       />
-                                    </EuiFormRow>
+                                    </EuiCompressedFormRow>
                                   </EuiFlexItem>
                                 ) : null}
                               </EuiFlexGroup>
@@ -960,7 +971,7 @@ function AddAnomalyDetector({
 
                                 <EuiSpacer size="m" />
                                 <EuiPanel paddingSize="none">
-                                  <EuiButton
+                                  <EuiSmallButton
                                     className="featureButton"
                                     data-test-subj="addFeature"
                                     isDisabled={
@@ -972,7 +983,7 @@ function AddAnomalyDetector({
                                     }}
                                   >
                                     Add another feature
-                                  </EuiButton>
+                                  </EuiSmallButton>
                                 </EuiPanel>
                                 <EuiSpacer size="s" />
                                 <EuiText className="content-panel-subTitle">
@@ -1000,20 +1011,20 @@ function AddAnomalyDetector({
             <EuiFlyoutFooter>
               <EuiFlexGroup justifyContent="spaceBetween">
                 <EuiFlexItem grow={false}>
-                  <EuiButtonEmpty onClick={closeFlyout}>Cancel</EuiButtonEmpty>
+                  <EuiSmallButtonEmpty onClick={closeFlyout}>Cancel</EuiSmallButtonEmpty>
                 </EuiFlexItem>
                 <EuiFlexItem grow={false}>
                   {mode === FLYOUT_MODES.existing ? (
-                    <EuiButton
+                    <EuiSmallButton
                       fill={true}
                       data-test-subj="adAnywhereAssociateDetectorButton"
                       isLoading={formikProps.isSubmitting}
                       onClick={() => handleAssociate(selectedDetector)}
                     >
                       Associate detector
-                    </EuiButton>
+                    </EuiSmallButton>
                   ) : (
-                    <EuiButton
+                    <EuiSmallButton
                       fill={true}
                       disabled={associationLimitReached}
                       data-test-subj="adAnywhereCreateDetectorButton"
@@ -1023,7 +1034,7 @@ function AddAnomalyDetector({
                       }}
                     >
                       Create detector
-                    </EuiButton>
+                    </EuiSmallButton>
                   )}
                 </EuiFlexItem>
               </EuiFlexGroup>

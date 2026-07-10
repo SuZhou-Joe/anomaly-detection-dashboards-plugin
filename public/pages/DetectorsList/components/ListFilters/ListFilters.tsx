@@ -10,9 +10,9 @@
  */
 
 import {
-  EuiComboBox,
+  EuiCompressedComboBox,
   EuiComboBoxOptionProps,
-  EuiFieldSearch,
+  EuiCompressedFieldSearch,
   EuiFlexGroup,
   EuiFlexItem,
   EuiPagination,
@@ -34,10 +34,18 @@ interface ListFiltersProps {
   onSearchIndexChange: (searchValue: string) => void;
   onPageClick: (pageNumber: number) => void;
 }
+
+const getVisibleIndices = (props) => {
+  const visibleIndices = props.selectedIndices.length > 0
+            ? props.selectedIndices.map((index) => ({ label: index }))
+            : []
+  return visibleIndices;
+}
+
 export const ListFilters = (props: ListFiltersProps) => (
   <EuiFlexGroup gutterSize="s">
     <EuiFlexItem grow={false} style={{ width: '40%' }}>
-      <EuiFieldSearch
+      <EuiCompressedFieldSearch
         fullWidth={true}
         value={props.search}
         placeholder="Search"
@@ -46,7 +54,7 @@ export const ListFilters = (props: ListFiltersProps) => (
       />
     </EuiFlexItem>
     <EuiFlexItem>
-      <EuiComboBox
+      <EuiCompressedComboBox
         id="selectedDetectorStates"
         data-test-subj="detectorStateFilter"
         placeholder="All detector states"
@@ -63,7 +71,7 @@ export const ListFilters = (props: ListFiltersProps) => (
       />
     </EuiFlexItem>
     <EuiFlexItem>
-      <EuiComboBox
+      <EuiCompressedComboBox
         id="selectedIndices"
         data-test-subj="indicesFilter"
         placeholder="All indices"
@@ -72,11 +80,7 @@ export const ListFilters = (props: ListFiltersProps) => (
         options={props.indexOptions}
         onChange={props.onIndexChange}
         onSearchChange={props.onSearchIndexChange}
-        selectedOptions={
-          props.selectedIndices.length > 0
-            ? props.selectedIndices.map((index) => ({ label: index }))
-            : []
-        }
+        selectedOptions={getVisibleIndices(props)}
         fullWidth={true}
       />
     </EuiFlexItem>

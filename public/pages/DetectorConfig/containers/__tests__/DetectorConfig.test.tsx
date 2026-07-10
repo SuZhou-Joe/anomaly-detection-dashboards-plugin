@@ -27,15 +27,26 @@ import {
   FEATURE_TYPE,
   UiFeature,
   FeatureAttributes,
+  OPERATORS_MAP,
+  UNITS,
 } from '../../../../models/interfaces';
-import { getRandomDetector } from '../../../../redux/reducers/__tests__/utils';
+import {
+  getRandomDetector,
+  getUIMetadata,
+} from '../../../../redux/reducers/__tests__/utils';
 import { coreServicesMock } from '../../../../../test/mocks';
 import { toStringConfigCell } from '../../../ReviewAndCreate/utils/helpers';
 import { DATA_TYPES } from '../../../../utils/constants';
-import { OPERATORS_MAP } from '../../../../models/interfaces';
-import { displayText } from '../../../DefineDetector/components/DataFilterList/utils/helpers';
 import { mockedStore, initialState } from '../../../../redux/utils/testUtils';
 import { CoreServicesContext } from '../../../../components/CoreServices/CoreServices';
+import {
+  ImputationMethod,
+  Action,
+  ThresholdType,
+  Operator,
+} from '../../../../models/types';
+import { DETECTOR_STATE } from '../../../../../server/utils/constants';
+import { featureQuery1, featureQuery2 } from './utils/featureQueries';
 
 const renderWithRouter = (detector: Detector) => ({
   ...render(
@@ -85,60 +96,30 @@ const filters = [
   },
 ] as UIFilter[];
 
-const featureQuery1 = {
-  featureName: 'value',
-  featureEnabled: true,
-  aggregationQuery: {
-    size: 0,
-    query: {
-      bool: {
-        must: {
-          terms: {
-            detector_id: ['detector_1', 'detector_2'],
-          },
-        },
-      },
-    },
-    aggs: {
-      unique_detectors: {
-        terms: {
-          field: 'detector_id',
-          size: 20,
-          order: {
-            total_anomalies_in_24hr: 'asc',
-          },
-        },
-        aggs: {
-          total_anomalies_in_24hr: {
-            filter: {
-              range: {
-                data_start_time: { gte: 'now-24h', lte: 'now' },
-              },
-            },
-          },
-          latest_anomaly_time: { max: { field: 'data_start_time' } },
-        },
-      },
-    },
-  },
-} as { [key: string]: any };
-
-const featureQuery2 = {
-  featureName: 'value2',
-  featureEnabled: true,
-  aggregationQuery: {
-    aggregation_name: {
-      max: {
-        field: 'value2',
-      },
-    },
-  },
-} as { [key: string]: any };
-
 describe('<DetectorConfig /> spec', () => {
   test('renders the component', () => {
     const randomDetector = {
       ...getRandomDetector(false),
+      imputationOption: { method: ImputationMethod.PREVIOUS },
+      rules: [
+        {
+          action: Action.IGNORE_ANOMALY,
+          conditions: [
+            {
+              featureName: 'value', // Matches a feature in featureAttributes
+              thresholdType: ThresholdType.ACTUAL_OVER_EXPECTED_MARGIN,
+              operator: Operator.LTE,
+              value: 5,
+            },
+            {
+              featureName: 'value2', // Matches another feature in featureAttributes
+              thresholdType: ThresholdType.EXPECTED_OVER_ACTUAL_RATIO,
+              operator: Operator.LTE,
+              value: 10,
+            },
+          ],
+        },
+      ],
     };
     const { container } = renderWithRouter(randomDetector);
     expect(container.firstChild).toMatchSnapshot();
@@ -152,16 +133,14 @@ describe('<DetectorConfig /> spec', () => {
       shingleSize: 8,
     };
     const { getByText, queryByText } = renderWithRouter(randomDetector);
-    waitFor(() => {
+    await waitFor(() => {
       getByText('Model parameters are required to run a detector');
       queryByText('Set the index fields');
       getByText('Model configuration');
       getByText(randomDetector.name);
       getByText(randomDetector.indices[0]);
-      getByText(toStringConfigCell(randomDetector.detectionInterval));
       getByText(toStringConfigCell(randomDetector.lastUpdateTime));
       getByText(randomDetector.id);
-      getByText(toStringConfigCell(randomDetector.windowDelay));
       getByText(randomDetector.description);
       // filter should be -
       getByText('-');
@@ -306,24 +285,40 @@ describe('<DetectorConfig /> spec', () => {
   });
 
   test('renders the component with 2 custom and 1 simple features', () => {
+    const features = [
+      {
+        featureName: 'value',
+        featureEnabled: true,
+        aggregationQuery: featureQuery1,
+      },
+      {
+        featureName: 'value2',
+        featureEnabled: true,
+        aggregationQuery: featureQuery2,
+      },
+      {
+        featureName: 'value',
+        featureEnabled: false,
+      },
+    ] as FeatureAttributes[];
+
+    const randomFixedValueMap: Array<{ featureName: string; data: number }> =
+      [];
+
+    features.forEach((feature) => {
+      if (feature.featureEnabled) {
+        randomFixedValueMap.push({ featureName: feature.featureName, data: 3 });
+      }
+    });
+
+    const imputationOption = {
+      method: ImputationMethod.FIXED_VALUES,
+      defaultFill: randomFixedValueMap,
+    };
+
     const randomDetector = {
       ...getRandomDetector(true),
-      featureAttributes: [
-        {
-          featureName: 'value',
-          featureEnabled: true,
-          aggregationQuery: featureQuery1,
-        },
-        {
-          featureName: 'value2',
-          featureEnabled: true,
-          aggregationQuery: featureQuery2,
-        },
-        {
-          featureName: 'value',
-          featureEnabled: false,
-        },
-      ] as FeatureAttributes[],
+      featureAttributes: features,
       uiMetadata: {
         filterType: FILTER_TYPES.SIMPLE,
         filters: [],
@@ -341,8 +336,89 @@ describe('<DetectorConfig /> spec', () => {
           } as UiFeature,
         },
       } as UiMetaData,
+      imputationOption: imputationOption,
+      rules: [
+        {
+          action: Action.IGNORE_ANOMALY,
+          conditions: [
+            {
+              featureName: 'value', // Matches a feature in featureAttributes
+              thresholdType: ThresholdType.ACTUAL_OVER_EXPECTED_MARGIN,
+              operator: Operator.LTE,
+              value: 5,
+            },
+            {
+              featureName: 'value2', // Matches another feature in featureAttributes
+              thresholdType: ThresholdType.EXPECTED_OVER_ACTUAL_RATIO,
+              operator: Operator.LTE,
+              value: 10,
+            },
+          ],
+        },
+      ],
     };
     const { container } = renderWithRouter(randomDetector);
+    expect(container.firstChild).toMatchSnapshot();
+  });
+  test('renders rules', () => {
+    // Define example features
+    const features = [
+      {
+        featureName: 'value',
+        featureEnabled: true,
+        aggregationQuery: featureQuery1,
+      },
+      {
+        featureName: 'value2',
+        featureEnabled: true,
+        aggregationQuery: featureQuery2,
+      },
+      {
+        featureName: 'value',
+        featureEnabled: false,
+      },
+    ] as FeatureAttributes[];
+
+    // Updated example detector
+    const testDetector: Detector = {
+      primaryTerm: 1,
+      seqNo: 1,
+      id: 'detector-1',
+      name: 'Sample Detector',
+      description: 'A sample detector for testing',
+      timeField: 'timestamp',
+      indices: ['index1'],
+      filterQuery: {},
+      featureAttributes: features, // Using the provided features
+      windowDelay: { period: { interval: 1, unit: UNITS.MINUTES } },
+      detectionInterval: { period: { interval: 1, unit: UNITS.MINUTES } },
+      shingleSize: 8,
+      lastUpdateTime: 1586823218000,
+      curState: DETECTOR_STATE.RUNNING,
+      stateError: '',
+      uiMetadata: getUIMetadata(features),
+      rules: [
+        {
+          action: Action.IGNORE_ANOMALY,
+          conditions: [
+            {
+              featureName: 'value', // Matches a feature in featureAttributes
+              thresholdType: ThresholdType.ACTUAL_OVER_EXPECTED_MARGIN,
+              operator: Operator.LTE,
+              value: 5,
+            },
+            {
+              featureName: 'value2', // Matches another feature in featureAttributes
+              thresholdType: ThresholdType.EXPECTED_OVER_ACTUAL_RATIO,
+              operator: Operator.LTE,
+              value: 10,
+            },
+          ],
+        },
+      ],
+    };
+
+    const { container } = renderWithRouter(testDetector);
     expect(container.firstChild).toMatchSnapshot();
   });
 });

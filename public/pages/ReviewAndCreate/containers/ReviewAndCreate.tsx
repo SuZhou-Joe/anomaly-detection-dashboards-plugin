@@ -16,9 +16,9 @@ import {
   EuiFlexItem,
   EuiFlexGroup,
   EuiPage,
-  EuiButton,
-  EuiTitle,
-  EuiButtonEmpty,
+  EuiSmallButton,
+  EuiText,
+  EuiSmallButtonEmpty,
   EuiSpacer,
 } from '@elastic/eui';
 import {
@@ -56,7 +56,6 @@ import {
 import {
   constructHrefWithDataSourceId,
   getDataSourceFromURL,
-  isDataSourceCompatible,
 } from '../../../pages/utils/helpers';
 import {
   getDataSourceManagementPlugin,
@@ -311,7 +310,6 @@ export function ReviewAndCreate(props: ReviewAndCreateProps) {
           fullWidth: false,
           savedObjects: getSavedObjectsClient(),
           notifications: getNotifications(),
-          dataSourceFilter: isDataSourceCompatible,
         }}
       />
     );
@@ -334,9 +332,9 @@ export function ReviewAndCreate(props: ReviewAndCreateProps) {
             <EuiPageBody>
               <EuiPageHeader>
                 <EuiPageHeaderSection>
-                  <EuiTitle size="l" data-test-subj="reviewAndCreateTitle">
+                  <EuiText size="s" data-test-subj="reviewAndCreateTitle">
                     <h1>Review and create </h1>
-                  </EuiTitle>
+                  </EuiText>
                 </EuiPageHeaderSection>
               </EuiPageHeader>
               <DetectorDefinitionFields
@@ -348,6 +346,7 @@ export function ReviewAndCreate(props: ReviewAndCreateProps) {
                 isCreate={true}
                 isLoading={isLoading}
                 isCreatingDetector={isCreatingDetector}
+                dataSourceId={dataSourceId}
               />
               <EuiSpacer />
               <ModelConfigurationFields
@@ -374,7 +373,7 @@ export function ReviewAndCreate(props: ReviewAndCreateProps) {
             style={{ marginRight: '12px' }}
           >
             <EuiFlexItem grow={false}>
-              <EuiButtonEmpty
+              <EuiSmallButtonEmpty
                 onClick={() => {
                   props.history.push(
                     constructHrefWithDataSourceId(
@@ -386,10 +385,10 @@ export function ReviewAndCreate(props: ReviewAndCreateProps) {
                 }}
               >
                 Cancel
-              </EuiButtonEmpty>
+              </EuiSmallButtonEmpty>
             </EuiFlexItem>
             <EuiFlexItem grow={false}>
-              <EuiButton
+              <EuiSmallButton
                 iconSide="left"
                 iconType="arrowLeft"
                 fill={false}
@@ -399,10 +398,10 @@ export function ReviewAndCreate(props: ReviewAndCreateProps) {
                 }}
               >
                 Previous
-              </EuiButton>
+              </EuiSmallButton>
             </EuiFlexItem>
             <EuiFlexItem grow={false}>
-              <EuiButton
+              <EuiSmallButton
                 type="submit"
                 fill={true}
                 data-test-subj="createDetectorButton"
@@ -411,7 +410,7 @@ export function ReviewAndCreate(props: ReviewAndCreateProps) {
                 onClick={formikProps.handleSubmit}
               >
                 Create detector
-              </EuiButton>
+              </EuiSmallButton>
             </EuiFlexItem>
           </EuiFlexGroup>
         </Fragment>

@@ -13,12 +13,13 @@ import {
   EuiEmptyPrompt,
   EuiLink,
   EuiIcon,
-  EuiButton,
+  EuiSmallButton,
   EuiOverlayMask,
+  EuiText,
 } from '@elastic/eui';
 import React, { Fragment, useState } from 'react';
 import { Detector } from '../../../../models/interfaces';
-import { BASE_DOCS_LINK } from '../../../../utils/constants';
+import { AD_DOCS_LINK } from '../../../../utils/constants';
 import { HistoricalRangeModal } from '../HistoricalRangeModal';
 
 interface EmptyHistoricalDetectorResultsProps {
@@ -47,21 +48,23 @@ export const EmptyHistoricalDetectorResults = (
               />
             </EuiOverlayMask>
           ) : null}
-          <p>
-            Historical analysis lets you apply anomaly detection models over
-            long historical data windows (weeks or months). You can identify
-            anomaly patterns, seasonality, and trends.{' '}
-            <EuiLink
-              href={`${BASE_DOCS_LINK}/ad/index/#step-6-analyze-historical-data`}
-              target="_blank"
-            >
-              Learn more
-            </EuiLink>{' '}
-          </p>
+          <EuiText size="s">
+            <p>
+              Historical analysis lets you apply anomaly detection models over
+              long historical data windows (weeks or months). You can identify
+              anomaly patterns, seasonality, and trends.{' '}
+              <EuiLink
+                href={`${AD_DOCS_LINK}`}
+                target="_blank"
+              >
+                Learn more
+              </EuiLink>{' '}
+            </p>
+          </EuiText>
         </Fragment>
       }
       actions={
-        <EuiButton
+        <EuiSmallButton
           data-test-subj="runHistoricalAnalysisButton"
           fill={true}
           onClick={() => {
@@ -69,7 +72,7 @@ export const EmptyHistoricalDetectorResults = (
           }}
         >
           Run historical analysis
-        </EuiButton>
+        </EuiSmallButton>
       }
     />
   );

@@ -14,6 +14,7 @@ import {
   FEATURE_TYPE,
   FeatureAttributes,
   Detector,
+  UNITS,
 } from '../../../models/interfaces';
 import { v4 as uuidv4 } from 'uuid';
 import { get, forOwn, cloneDeep, isEmpty } from 'lodash';
@@ -21,12 +22,25 @@ import { DataTypes } from '../../../redux/reducers/opensearch';
 import {
   ModelConfigurationFormikValues,
   FeaturesFormikValues,
+  CustomValueFormikValues,
+  ImputationFormikValues,
+  RuleFormikValues,
 } from '../../ConfigureModel/models/interfaces';
 import { INITIAL_MODEL_CONFIGURATION_VALUES } from '../../ConfigureModel/utils/constants';
 import {
   featuresToUIMetadata,
   formikToFeatureAttributes,
 } from '../../ReviewAndCreate/utils/helpers';
+import {
+  ImputationMethod,
+  ImputationOption,
+  Condition,
+  Rule,
+  ThresholdType,
+  Operator,
+  Action,
+} from '../../../models/types';
+import { SparseDataOptionValue } from './constants';
 
 export const getFieldOptions = (
   allFields: { [key: string]: string[] },
@@ -120,6 +134,7 @@ export const validateFeatures = (values: any) => {
       };
     }
   });
+
   return hasError ? { featureList: featureErrors } : undefined;
 };
 
@@ -203,6 +218,16 @@ export const getCategoryFields = (dataTypes: DataTypes) => {
   return keywordFields.concat(ipFields);
 };
 
+export const focusOnImputationOption = () => {
+  const component = document.getElementById('imputationOption');
+  component?.focus();
+};
+
+export const focusOnSuppressionRules = () => {
+  const component = document.getElementById('suppressionRules');
+  component?.focus();
+};
+
 export const getShingleSizeFromObject = (obj: object) => {
   return get(obj, 'shingleSize', DEFAULT_SHINGLE_SIZE);
 };
@@ -227,12 +252,49 @@ export function modelConfigurationToFormik(
   if (isEmpty(detector)) {
     return initialValues;
   }
+  var interval = get(detector, 'detectionInterval.period.interval', 10);
+  var windowDelay = get(detector, 'windowDelay.period.interval', 0);
+  var frequency = get(detector, 'frequency.period.interval', interval);
+  var history = get(detector, 'history', 40);
+
+  var imputationMethod = imputationMethodToFormik(detector);
+
+  var defaultFillArray: CustomValueFormikValues[] = [];
+
+  if (SparseDataOptionValue.CUSTOM_VALUE === imputationMethod) {
+    const defaultFill = get(
+      detector,
+      'imputationOption.defaultFill',
+      null
+    ) as Array<{ featureName: string; data: number }> | null;
+    defaultFillArray = defaultFill
+      ? defaultFill.map(({ featureName, data }) => ({
+          featureName,
+          data,
+        }))
+      : [];
+  }
+
+  const imputationFormikValues: ImputationFormikValues = {
+    imputationMethod: imputationMethod,
+    custom_value:
+      SparseDataOptionValue.CUSTOM_VALUE === imputationMethod
+        ? defaultFillArray
+        : undefined,
+  };
+
   return {
     ...initialValues,
     featureList: featuresToFormik(detector),
     categoryFieldEnabled: !isEmpty(get(detector, 'categoryField', [])),
     categoryField: get(detector, 'categoryField', []),
     shingleSize: get(detector, 'shingleSize', DEFAULT_SHINGLE_SIZE),
+    imputationOption: imputationFormikValues,
+    suppressionRules: rulesToFormik(detector.rules),
+    interval: interval,
+    windowDelay: windowDelay,
+    frequency: frequency,
+    history: history,
   };
 }
 
@@ -280,6 +342,30 @@ export function formikToModelConfiguration(
     categoryField: !isEmpty(values?.categoryField)
       ? values.categoryField
       : undefined,
+    imputationOption: formikToImputationOption(values.imputationOption),
+    rules: formikToRules(values.suppressionRules),
+    detectionInterval: {
+      period: { interval: values.interval, unit: UNITS.MINUTES },
+    },
+    ...(values.windowDelay && values.windowDelay > 0
+      ? {
+          windowDelay: {
+            period: { interval: values.windowDelay, unit: UNITS.MINUTES },
+          },
+        }
+      : {}),
+    ...(values.frequency && values.frequency > 0
+      ? {
+          frequency: {
+            period: { interval: values.frequency, unit: UNITS.MINUTES },
+          },
+        }
+      : {}),
+    ...(values.history && values.history > 0
+      ? {
+          history: values.history,
+        }
+      : {}),
   } as Detector;
 
   return detectorBody;
@@ -290,7 +376,13 @@ export function prepareDetector(
   shingleSizeValue: number,
   categoryFields: string[],
   ad: Detector,
-  forPreview: boolean = false
+  forPreview: boolean = false,
+  interval: number,
+  windowDelay?: number,
+  frequency?: number,
+  history?: number,
+  imputationOption?: ImputationFormikValues,
+  suppressionRules?: RuleFormikValues[],
 ): Detector {
   const detector = cloneDeep(ad);
   const featureAttributes = formikToFeatures(featureValues, forPreview);
@@ -304,6 +396,30 @@ export function prepareDetector(
       ...detector.uiMetadata,
       features: { ...featuresToUIMetadata(featureValues) },
     },
+    imputationOption: formikToImputationOption(imputationOption),
+    rules: formikToRules(suppressionRules),
+    detectionInterval: {
+      period: { interval: interval, unit: UNITS.MINUTES },
+    },
+    ...(windowDelay && windowDelay > 0
+      ? {
+          windowDelay: {
+            period: { interval: windowDelay, unit: UNITS.MINUTES },
+          },
+        }
+      : {}),
+    ...(frequency && frequency > 0
+      ? {
+          frequency: {
+            period: { interval: frequency, unit: UNITS.MINUTES },
+          },
+        }
+      : {}),
+    ...(history && history > 0
+      ? {
+          history: history,
+        }
+      : {}),
   };
 }
 
@@ -327,3 +443,328 @@ export function formikToSimpleAggregation(value: FeaturesFormikValues) {
     return {};
   }
 }
+
+export function formikToImputationOption(
+  imputationFormikValues?: ImputationFormikValues
+): ImputationOption | undefined {
+  // Map the formik method to the imputation method; return undefined if method is not recognized.
+  const method = formikToImputationMethod(
+    imputationFormikValues?.imputationMethod
+  );
+  if (!method) return undefined;
+
+  // Convert custom_value array to defaultFill if the method is FIXED_VALUES.
+  const defaultFill =
+    method === ImputationMethod.FIXED_VALUES
+      ? imputationFormikValues?.custom_value?.map(({ featureName, data }) => ({
+          featureName,
+          data,
+        }))
+      : undefined;
+
+  // Construct and return the ImputationOption object.
+  return { method, defaultFill };
+}
+
+export function imputationMethodToFormik(detector: Detector): string {
+  var imputationMethod = get(
+    detector,
+    'imputationOption.method',
+    undefined
+  ) as ImputationMethod;
+
+  switch (imputationMethod) {
+    case ImputationMethod.FIXED_VALUES:
+      return SparseDataOptionValue.CUSTOM_VALUE;
+    case ImputationMethod.PREVIOUS:
+      return SparseDataOptionValue.PREVIOUS_VALUE;
+    case ImputationMethod.ZERO:
+      return SparseDataOptionValue.SET_TO_ZERO;
+    default:
+      break;
+  }
+
+  return SparseDataOptionValue.IGNORE;
+}
+
+export function formikToImputationMethod(
+  formikValue: string | undefined
+): ImputationMethod | undefined {
+  switch (formikValue) {
+    case SparseDataOptionValue.CUSTOM_VALUE:
+      return ImputationMethod.FIXED_VALUES;
+    case SparseDataOptionValue.PREVIOUS_VALUE:
+      return ImputationMethod.PREVIOUS;
+    case SparseDataOptionValue.SET_TO_ZERO:
+      return ImputationMethod.ZERO;
+    default:
+      return undefined;
+  }
+}
+
+export const getCustomValueStrArray = (
+  imputationMethodStr: string,
+  detector: Detector
+): string[] => {
+  if (SparseDataOptionValue.CUSTOM_VALUE === imputationMethodStr) {
+    const defaultFill: Array<{ featureName: string; data: number }> = get(
+      detector,
+      'imputationOption.defaultFill',
+      []
+    );
+
+    return defaultFill.map(
+      ({ featureName, data }) => `${featureName}: ${data}`
+    );
+  }
+  return [];
+};
+
+export const getSuppressionRulesArray = (detector: Detector): string[] => {
+  if (!detector.rules || detector.rules.length === 0) {
+    return []; // Return an empty array if there are no rules
+  }
+
+  return detector.rules.flatMap((rule) => {
+    // Convert each condition to a readable string
+    return rule.conditions.map((condition) => {
+      const featureName = condition.featureName;
+      const thresholdType = condition.thresholdType;
+      if (thresholdType === ThresholdType.ACTUAL_IS_OVER_EXPECTED) {
+        return `Ignore anomalies for feature "${featureName}" when actual value is above the expected value`;
+      } else if (thresholdType === ThresholdType.ACTUAL_IS_BELOW_EXPECTED) {
+        return `Ignore anomalies for feature "${featureName}" when actual value is below the expected value`;
+      }
+
+      let value = condition.value;
+      const isPercentage =
+        thresholdType === ThresholdType.ACTUAL_OVER_EXPECTED_RATIO ||
+        thresholdType === ThresholdType.EXPECTED_OVER_ACTUAL_RATIO;
+
+      // If it is a percentage, multiply by 100
+      if (isPercentage) {
+        value *= 100;
+      }
+
+      // Determine whether it is "above" or "below" based on ThresholdType
+      const aboveOrBelow =
+        thresholdType === ThresholdType.ACTUAL_OVER_EXPECTED_MARGIN ||
+        thresholdType === ThresholdType.ACTUAL_OVER_EXPECTED_RATIO
+          ? 'above'
+          : 'below';
+
+      // Construct the formatted string
+      return `Ignore anomalies for feature "${featureName}" with no more than ${value}${
+        isPercentage ? '%' : ''
+      } ${aboveOrBelow} expected value.`;
+    });
+  });
+};
+
+export const getSuppressionRulesArrayForFeature = (
+  detector: Detector,
+  featureName: string
+): string[] => {
+  if (!detector.rules || detector.rules.length === 0) {
+    return []; // Return an empty array if there are no rules
+  }
+
+  return detector.rules.flatMap((rule) => {
+    // Filter conditions based on the specified feature name
+    const featureConditions = rule.conditions.filter(
+      (condition) => condition.featureName === featureName
+    );
+
+    // Convert each filtered condition to a readable string
+    return featureConditions.map((condition) => {
+      const thresholdType = condition.thresholdType;
+
+      if (thresholdType === ThresholdType.ACTUAL_IS_OVER_EXPECTED) {
+        return `Ignore anomalies for feature "${featureName}" when actual value is above the expected value.`;
+      } else if (thresholdType === ThresholdType.ACTUAL_IS_BELOW_EXPECTED) {
+        return `Ignore anomalies for feature "${featureName}" when actual value is below the expected value.`;
+      }
+
+      let value = condition.value;
+      const isPercentage =
+        thresholdType === ThresholdType.ACTUAL_OVER_EXPECTED_RATIO ||
+        thresholdType === ThresholdType.EXPECTED_OVER_ACTUAL_RATIO;
+
+      // If it is a percentage, multiply by 100
+      if (isPercentage) {
+        value *= 100;
+      }
+
+      // Determine whether it is "above" or "below" based on ThresholdType
+      const aboveOrBelow =
+        thresholdType === ThresholdType.ACTUAL_OVER_EXPECTED_MARGIN ||
+        thresholdType === ThresholdType.ACTUAL_OVER_EXPECTED_RATIO
+          ? 'above'
+          : 'below';
+
+      // Construct the formatted string
+      return `Ignore anomalies for feature "${featureName}" with no more than ${value}${
+        isPercentage ? '%' : ''
+      } ${aboveOrBelow} expected value.`;
+    });
+  });
+};
+
+// Convert RuleFormikValues[] to Rule[]
+export const formikToRules = (
+  formikValues?: RuleFormikValues[]
+): Rule[] | undefined => {
+  if (!formikValues || formikValues.length === 0) {
+    return undefined; // Return undefined for undefined or empty input
+  }
+
+  // Flatten the nested array of suppressionRule by feature and filter out null entries
+  const flattenedSuppressionFormikValues = formikValues.flatMap(
+    (nestedArray) => nestedArray || [] // If null, replace with an empty array
+  );
+
+  return flattenedSuppressionFormikValues.map((formikValue) => {
+    const conditions: Condition[] = [];
+    if (formikValue != null) {
+      // Determine the threshold type based on aboveBelow and the threshold type (absolute or relative)
+      const getThresholdType = (
+        aboveBelow: string,
+        isAbsolute: boolean,
+        directionRule?: boolean
+      ): ThresholdType => {
+        if (directionRule) {
+          return aboveBelow === 'above'
+            ? ThresholdType.ACTUAL_IS_BELOW_EXPECTED
+            : ThresholdType.ACTUAL_IS_OVER_EXPECTED;
+        } else if (isAbsolute) {
+          return aboveBelow === 'above'
+            ? ThresholdType.ACTUAL_OVER_EXPECTED_MARGIN
+            : ThresholdType.EXPECTED_OVER_ACTUAL_MARGIN;
+        } else {
+          return aboveBelow === 'above'
+            ? ThresholdType.ACTUAL_OVER_EXPECTED_RATIO
+            : ThresholdType.EXPECTED_OVER_ACTUAL_RATIO;
+        }
+      };
+
+      if (formikValue.directionRule) {
+        conditions.push({
+          featureName: formikValue.featureName,
+          thresholdType: getThresholdType(
+            formikValue.aboveBelow,
+            true,
+            formikValue.directionRule
+          ),
+          operator: undefined,
+          value: undefined,
+        });
+      }
+
+      // Check if absoluteThreshold is provided, create a condition
+      if (
+        formikValue.absoluteThreshold !== undefined &&
+        formikValue.absoluteThreshold !== 0 &&
+        formikValue.absoluteThreshold !== null &&
+        typeof formikValue.absoluteThreshold === 'number' && // Check if it's a number
+        !isNaN(formikValue.absoluteThreshold) && // Ensure it's not NaN
+        formikValue.absoluteThreshold > 0 && // Check if it's positive
+        formikValue?.directionRule != true
+      ) {
+        conditions.push({
+          featureName: formikValue.featureName,
+          thresholdType: getThresholdType(formikValue.aboveBelow, true),
+          operator: Operator.LTE,
+          value: formikValue.absoluteThreshold,
+        });
+      }
+
+      // Check if relativeThreshold is provided, create a condition
+      if (
+        formikValue.relativeThreshold !== undefined &&
+        formikValue.relativeThreshold !== 0 &&
+        formikValue.relativeThreshold !== null &&
+        typeof formikValue.relativeThreshold === 'number' && // Check if it's a number
+        !isNaN(formikValue.relativeThreshold) && // Ensure it's not NaN
+        formikValue.relativeThreshold > 0 && // Check if it's positive
+        formikValue?.directionRule != true
+      ) {
+        conditions.push({
+          featureName: formikValue.featureName,
+          thresholdType: getThresholdType(formikValue.aboveBelow, false),
+          operator: Operator.LTE,
+          value: formikValue.relativeThreshold / 100, // Convert percentage to decimal,
+        });
+      }
+    }
+
+    return {
+      action: Action.IGNORE_ANOMALY,
+      conditions,
+    };
+  });
+};
+
+export const rulesToFormik = (
+  rules?: Rule[]
+): (RuleFormikValues[] | null)[] => {
+  if (!rules || rules.length === 0) {
+    return [];
+  }
+  // Group rules by featureName
+  const groupedRules: { [featureName: string]: RuleFormikValues[] } = {};
+
+  rules.forEach((rule) => {
+    rule.conditions.forEach((condition) => {
+      // Create a new formikValue for each condition
+      const formikValue: RuleFormikValues = {
+        featureName: condition.featureName,
+        absoluteThreshold: undefined,
+        relativeThreshold: undefined,
+        aboveBelow: 'above', // Default to 'above', adjust as needed
+      };
+
+      // Populate formikValue based on threshold type
+      switch (condition.thresholdType) {
+        case ThresholdType.ACTUAL_OVER_EXPECTED_MARGIN:
+          formikValue.absoluteThreshold = condition.value;
+          formikValue.aboveBelow = 'above';
+          break;
+        case ThresholdType.EXPECTED_OVER_ACTUAL_MARGIN:
+          formikValue.absoluteThreshold = condition.value;
+          formikValue.aboveBelow = 'below';
+          break;
+        case ThresholdType.ACTUAL_OVER_EXPECTED_RATIO:
+          formikValue.relativeThreshold = (condition.value ?? 1) * 100; // Convert to percentage
+          formikValue.aboveBelow = 'above';
+          break;
+        case ThresholdType.EXPECTED_OVER_ACTUAL_RATIO:
+          formikValue.relativeThreshold = (condition.value ?? 1) * 100; // Convert to percentage
+          formikValue.aboveBelow = 'below';
+          break;
+        case ThresholdType.ACTUAL_IS_BELOW_EXPECTED:
+          formikValue.relativeThreshold = 0;
+          formikValue.aboveBelow = 'above';
+          formikValue.directionRule = true;
+          break;
+        case ThresholdType.ACTUAL_IS_OVER_EXPECTED:
+          formikValue.relativeThreshold = 0;
+          formikValue.aboveBelow = 'below';
+          formikValue.directionRule = true;
+          break;
+        default:
+          break;
+      }
+
+      if (!groupedRules[formikValue.featureName]) {
+        groupedRules[formikValue.featureName] = [];
+      }
+      groupedRules[formikValue.featureName].push(formikValue);
+    });
+  });
+
+  const featureList = Object.keys(groupedRules);
+  const finalRules: (RuleFormikValues[] | null)[] = featureList.map(
+    (featureName) => groupedRules[featureName] || null
+  );
+  return finalRules;
+};

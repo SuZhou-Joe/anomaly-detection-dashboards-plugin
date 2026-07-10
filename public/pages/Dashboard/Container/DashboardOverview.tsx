@@ -23,7 +23,7 @@ import { getDetectorList } from '../../../redux/reducers/ad';
 import {
   EuiFlexGroup,
   EuiFlexItem,
-  EuiComboBox,
+  EuiCompressedComboBox,
   EuiComboBoxOptionProps,
   EuiLoadingSpinner,
   EuiSpacer,
@@ -45,7 +45,7 @@ import {
   getVisibleOptions,
   isDataSourceCompatible,
 } from '../../utils/helpers';
-import { BREADCRUMBS, MDS_BREADCRUMBS } from '../../../utils/constants';
+import { BREADCRUMBS, MDS_BREADCRUMBS, USE_NEW_HOME_PAGE } from '../../../utils/constants';
 import { DETECTOR_STATE } from '../../../../server/utils/constants';
 import {
   getDetectorStateOptions,
@@ -64,7 +64,9 @@ import {
   getDataSourceEnabled,
   getNotifications,
   getSavedObjectsClient,
+  getUISettings,
 } from '../../../services';
+import { isNoLivingConnectionsError } from '../../../utils/utils';
 import { RouteComponentProps } from 'react-router-dom';
 
 interface OverviewProps extends RouteComponentProps {
@@ -93,11 +95,11 @@ export function DashboardOverview(props: OverviewProps) {
   const queryParams = getDataSourceFromURL(props.location);
   const [MDSOverviewState, setMDSOverviewState] = useState<MDSStates>({
     queryParams,
-    selectedDataSourceId: queryParams.dataSourceId === undefined 
-      ? undefined 
+    selectedDataSourceId: queryParams.dataSourceId === undefined
+      ? undefined
       : queryParams.dataSourceId,
   });
-  
+
   const getDetectorOptions = (detectorsIdMap: {
     [key: string]: DetectorListItem;
   }) => {
@@ -163,6 +165,8 @@ export function DashboardOverview(props: OverviewProps) {
   const visibleIndices = get(opensearchState, 'indices', []) as CatIndex[];
   const visibleAliases = get(opensearchState, 'aliases', []) as IndexAlias[];
 
+  const useUpdatedUX = getUISettings().get(USE_NEW_HOME_PAGE);
+
   const handleIndicesFilterChange = (
     options: EuiComboBoxOptionProps[]
   ): void => {
@@ -203,18 +207,6 @@ export function DashboardOverview(props: OverviewProps) {
     setCurrentDetectors(finalFilteredDetectors);
   };
 
-  const intializeDetectors = async () => {
-    dispatch(
-      getDetectorList(
-        getAllDetectorsQueryParamsWithDataSourceId(
-          MDSOverviewState.selectedDataSourceId
-        )
-      )
-    );
-    dispatch(getIndices('', MDSOverviewState.selectedDataSourceId));
-    dispatch(getAliases('', MDSOverviewState.selectedDataSourceId));
-  };
-
   useEffect(() => {
     const { history, location } = props;
     if (dataSourceEnabled) {
@@ -226,11 +218,23 @@ export function DashboardOverview(props: OverviewProps) {
         search: queryString.stringify(updatedParams),
       });
     }
-    intializeDetectors();
+    
++    dispatch(
+      getDetectorList(
+        getAllDetectorsQueryParamsWithDataSourceId(
+          MDSOverviewState.selectedDataSourceId
+        )
+      )
+    );
+    dispatch(getIndices('', MDSOverviewState.selectedDataSourceId));
+    dispatch(getAliases('', MDSOverviewState.selectedDataSourceId));
   }, [MDSOverviewState]);
 
   useEffect(() => {
     if (errorGettingDetectors) {
+      if (isNoLivingConnectionsError(errorGettingDetectors)) {
+        return;
+      }
       console.error(errorGettingDetectors);
       core.notifications.toasts.addDanger(
         typeof errorGettingDetectors === 'string' &&
@@ -242,16 +246,32 @@ export function DashboardOverview(props: OverviewProps) {
   }, [errorGettingDetectors]);
 
   useEffect(() => {
-    if (dataSourceEnabled) {
-      core.chrome.setBreadcrumbs([
-        MDS_BREADCRUMBS.ANOMALY_DETECTOR(MDSOverviewState.selectedDataSourceId),
-        MDS_BREADCRUMBS.DASHBOARD(MDSOverviewState.selectedDataSourceId),
-      ]);
+    if (useUpdatedUX) {
+      if (dataSourceEnabled) {
+        core.chrome.setBreadcrumbs([
+          MDS_BREADCRUMBS.ANOMALY_DETECTOR(MDSOverviewState.selectedDataSourceId),
+          MDS_BREADCRUMBS.DASHBOARD(MDSOverviewState.selectedDataSourceId),
+          BREADCRUMBS.TITLE_REAL_TIME_DASHBOARD,
+        ]);
+      } else {
+        core.chrome.setBreadcrumbs([
+          BREADCRUMBS.ANOMALY_DETECTOR,
+          BREADCRUMBS.DASHBOARD,
+          BREADCRUMBS.TITLE_REAL_TIME_DASHBOARD,
+        ]);
+      }
     } else {
-      core.chrome.setBreadcrumbs([
-        BREADCRUMBS.ANOMALY_DETECTOR,
-        BREADCRUMBS.DASHBOARD,
-      ]);
+      if (dataSourceEnabled) {
+        core.chrome.setBreadcrumbs([
+          MDS_BREADCRUMBS.ANOMALY_DETECTOR(MDSOverviewState.selectedDataSourceId),
+          MDS_BREADCRUMBS.DASHBOARD(MDSOverviewState.selectedDataSourceId),
+        ]);
+      } else {
+        core.chrome.setBreadcrumbs([
+          BREADCRUMBS.ANOMALY_DETECTOR,
+          BREADCRUMBS.DASHBOARD,
+        ]);
+      }
     }
   });
 
@@ -278,7 +298,7 @@ export function DashboardOverview(props: OverviewProps) {
           componentType={'DataSourceSelectable'}
           componentConfig={{
             fullWidth: false,
-            activeOption: props.landingDataSourceId === undefined 
+            activeOption: props.landingDataSourceId === undefined
               || MDSOverviewState.selectedDataSourceId === undefined
                 ? undefined
                 : [{ id: MDSOverviewState.selectedDataSourceId }],
@@ -308,7 +328,7 @@ export function DashboardOverview(props: OverviewProps) {
           <Fragment>
             <EuiFlexGroup justifyContent="flexStart" gutterSize="s">
               <EuiFlexItem>
-                <EuiComboBox
+                <EuiCompressedComboBox
                   id="detectorFilter"
                   data-test-subj="detectorFilter"
                   placeholder={ALL_DETECTORS_MESSAGE}
@@ -320,7 +340,7 @@ export function DashboardOverview(props: OverviewProps) {
                 />
               </EuiFlexItem>
               <EuiFlexItem>
-                <EuiComboBox
+                <EuiCompressedComboBox
                   id="detectorStateFilter"
                   data-test-subj="detectorStateFilter"
                   placeholder={ALL_DETECTOR_STATES_MESSAGE}
@@ -332,7 +352,7 @@ export function DashboardOverview(props: OverviewProps) {
                 />
               </EuiFlexItem>
               <EuiFlexItem>
-                <EuiComboBox
+                <EuiCompressedComboBox
                   id="indicesFilter"
                   data-test-subj="indicesFilter"
                   placeholder={ALL_INDICES_MESSAGE}

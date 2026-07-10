@@ -10,11 +10,12 @@ import {
   EuiSpacer,
   EuiInMemoryTable,
   EuiFlyoutBody,
-  EuiButton,
+  EuiSmallButton,
   EuiFlyout,
   EuiFlexItem,
   EuiFlexGroup,
   EuiCallOut,
+  EuiText,
 } from '@elastic/eui';
 import { get, isEmpty } from 'lodash';
 import '../styles.scss';
@@ -49,6 +50,7 @@ import {
 import { ASSOCIATED_DETECTOR_ACTION } from '../utils/constants';
 import { PLUGIN_AUGMENTATION_MAX_OBJECTS_SETTING } from '../../../../../public/expressions/constants';
 import { getAllDetectorsQueryParamsWithDataSourceId } from '../../../../../public/pages/utils/helpers';
+import { isNoLivingConnectionsError } from '../../../../utils/utils';
 
 interface ConfirmModalState {
   isOpen: boolean;
@@ -126,6 +128,9 @@ function AssociatedDetectors({ embeddable, closeFlyout, setMode }) {
       errorGettingDetectors &&
       !errorGettingDetectors.includes(SINGLE_DETECTOR_NOT_FOUND_MSG)
     ) {
+      if (isNoLivingConnectionsError(errorGettingDetectors)) {
+        return;
+      }
       console.error(errorGettingDetectors);
       notifications.toasts.addDanger(
         typeof errorGettingDetectors === 'string' &&
@@ -334,11 +339,11 @@ function AssociatedDetectors({ embeddable, closeFlyout, setMode }) {
         onClose={closeFlyout}
       >
         <EuiFlyoutHeader hasBorder>
-          <EuiTitle>
+          <EuiText size="s">
             <h2 id="associated-detectors__title">
               Associated anomaly detectors
             </h2>
-          </EuiTitle>
+          </EuiText>
         </EuiFlyoutHeader>
         {associationLimitReached ? (
           <EuiCallOut
@@ -371,7 +376,7 @@ function AssociatedDetectors({ embeddable, closeFlyout, setMode }) {
             </EuiFlexItem>
             <EuiFlexItem grow={false}>
               <div>
-                <EuiButton
+                <EuiSmallButton
                   data-test-subj="associateDetectorButton"
                   fill
                   disabled={associationLimitReached}
@@ -381,7 +386,7 @@ function AssociatedDetectors({ embeddable, closeFlyout, setMode }) {
                   }}
                 >
                   Associate a detector
-                </EuiButton>
+                </EuiSmallButton>
               </div>
             </EuiFlexItem>
           </EuiFlexGroup>

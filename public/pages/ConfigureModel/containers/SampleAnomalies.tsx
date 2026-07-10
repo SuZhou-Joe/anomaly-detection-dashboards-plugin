@@ -10,7 +10,7 @@
  */
 
 import {
-  EuiButton,
+  EuiSmallButton,
   EuiCallOut,
   EuiFlexGroup,
   EuiFlexItem,
@@ -44,8 +44,8 @@ import {
 } from '../../utils/anomalyResultUtils';
 import { focusOnFirstWrongFeature } from '../utils/helpers';
 import { prepareDetector } from '../utils/helpers';
-import { FeaturesFormikValues } from '../models/interfaces';
-import { BASE_DOCS_LINK } from '../../../utils/constants';
+import { FeaturesFormikValues, ImputationFormikValues, RuleFormikValues} from '../models/interfaces';
+import { AD_DOCS_LINK } from '../../../utils/constants';
 import { prettifyErrorMessage } from '../../../../server/utils/helpers';
 import { CoreStart } from '../../../../../../src/core/public';
 import { CoreServicesContext } from '../../../components/CoreServices/CoreServices';
@@ -59,6 +59,12 @@ interface SampleAnomaliesProps {
   categoryFields: string[];
   errors: any;
   setFieldTouched: any;
+  interval: number;
+  windowDelay: number;
+  frequency?: number;
+  history?: number;
+  imputationOption?: ImputationFormikValues;
+  suppressionRules?: RuleFormikValues[];
 }
 
 export function SampleAnomalies(props: SampleAnomaliesProps) {
@@ -183,7 +189,13 @@ export function SampleAnomalies(props: SampleAnomaliesProps) {
         props.shingleSize,
         props.categoryFields,
         newDetector,
-        true
+        true,
+        props.interval,
+        props.windowDelay,
+        props.frequency,
+        props.history,
+        props.imputationOption,
+        props.suppressionRules,
       );
       setPreviewDone(false);
       setZoomRange({ ...dateRange });
@@ -205,11 +217,11 @@ export function SampleAnomalies(props: SampleAnomaliesProps) {
       >
         <EuiFlexGroup>
           <EuiFlexItem>
-            <EuiText>
+            <EuiText size="s">
               {firstPreview
                 ? 'You can preview how your anomalies may look like from sample feature output and adjust the feature settings as needed.'
                 : 'Use the sample data as a reference to fine tune settings. To see the latest preview with your adjustments, click "Refresh preview". Once you are done with your edits, save your changes and run the detector to see real time anomalies for the new data set.'}{' '}
-              <EuiLink href={`${BASE_DOCS_LINK}/ad`} target="_blank">
+              <EuiLink href={`${AD_DOCS_LINK}`} target="_blank">
                 Learn more
               </EuiLink>
             </EuiText>
@@ -217,7 +229,7 @@ export function SampleAnomalies(props: SampleAnomaliesProps) {
         </EuiFlexGroup>
         <EuiFlexGroup>
           <EuiFlexItem grow={false}>
-            <EuiButton
+            <EuiSmallButton
               type="button"
               data-test-subj="previewDetector"
               onClick={() => {
@@ -231,11 +243,10 @@ export function SampleAnomalies(props: SampleAnomaliesProps) {
                   getSampleAnomalies();
                 }
               }}
-              fill={!firstPreview}
               isLoading={isLoading}
             >
               {firstPreview ? 'Preview anomalies' : 'Refresh preview'}
-            </EuiButton>
+            </EuiSmallButton>
           </EuiFlexItem>
         </EuiFlexGroup>
       </EuiCallOut>

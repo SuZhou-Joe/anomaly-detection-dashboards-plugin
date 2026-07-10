@@ -948,7 +948,7 @@ export const AnomalyHistory = (props: AnomalyHistoryProps) => {
                 <EuiSpacer size="m" />,
               ]
             : null}
-          <EuiTabs>{renderTabs()}</EuiTabs>
+          <EuiTabs size="s">{renderTabs()}</EuiTabs>
 
           {isLoading || isLoadingAnomalyResults ? (
             <EuiFlexGroup
@@ -990,6 +990,8 @@ export const AnomalyHistory = (props: AnomalyHistoryProps) => {
                     isHCDetector={isHCDetector}
                     isHistorical={props.isHistorical}
                     selectedHeatmapCell={selectedHeatmapCell}
+                    detectorIndices={props.detector.indices}
+                    detectorTimeField={props.detector.timeField}
                   />
                 )}
               </EuiPanel>
